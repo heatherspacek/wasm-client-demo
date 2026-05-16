@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>wasm game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a0f;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    canvas {
+      display: block;
+      border: 1px solid #222;
+      /* cursor: none; */
+    }
+
+    #err {
+      color: #f55;
+      font-family: monospace;
+      font-size: 13px;
+      padding: 1em;
+      position: absolute;
+      top: 1em;
+      left: 1em;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="c" width="640" height="480"></canvas>
+  <div id="err"></div>
+
+  <script>
+    "use strict";
+
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d", { desynchronized: true });
+
+    let canvasRect = canvas.getBoundingClientRect();
+    const refreshRect = () => { canvasRect = canvas.getBoundingClientRect(); };
+    window.addEventListener("resize", refreshRect);
+    window.addEventListener("scroll", refreshRect, { passive: true });
+
+    const inputView = new Float32Array(3);
+    canvas.addEventListener("pointermove", e => {
+      inputView[0] = e.clientX - canvasRect.left;
+      inputView[1] = e.clientY - canvasRect.top;
+    });
+    canvas.addEventListener("pointerdown", e => { inputView[2] = inputView[2] | (1 << e.button); });
+    canvas.addEventListener("pointerup", e => { inputView[2] = inputView[2] & ~(1 << e.button); });
+    canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+    const memory = new WebAssembly.Memory({ initial: 16, maximum: 256 });
+
+    (async () => {
+      const imports = {
+        env: {
+          memory,
+
+          // js_clear(r, g, b)
+          // Fill the canvas with a solid colour. Call once at the top of draw().
+          js_clear(r, g, b) {
+            ctx.fillStyle = `rgb(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          },
+
+          // js_draw_rect(x, y, w, h, r, g, b, a)
+          // Filled axis-aligned rectangle with RGBA colour.
+          js_draw_rect(x, y, w, h, r, g, b, a) {
+            ctx.globalAlpha = a;
+            ctx.fillStyle = `rgb(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0})`;
+            ctx.fillRect(x, y, w, h);
+            ctx.globalAlpha = 1.0;
+          },
+
+          // js_draw_sprite(x, y, w, h, sx, sy, sw, sh)
+          // Blit a region (sx, sy, sw, sh) from the spritesheet to (x, y, w, h).
+          js_draw_sprite(x, y, w, h, sx, sy, sw, sh) {
+            ctx.drawImage(spriteSheet, sx, sy, sw, sh, x, y, w, h);
+          },
+
+          // js_fill_text(textPtr, textLen, x, y, r, g, b, size)
+          // Draw a UTF-8 string from Wasm linear memory.
+          js_fill_text(textPtr, textLen, x, y, r, g, b, size) {
+            ctx.font = `${size}px monospace`;
+            ctx.fillStyle = `rgb(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0})`;
+            ctx.fillText(readString(textPtr, textLen), x, y);
+          },
+
+          // js_log(textPtr, textLen)
+          // Debug logger: call from C to write a string to the browser console.
+          // Free to remove once you no longer need it.
+          js_log(textPtr, textLen) {
+            console.log(readString(textPtr, textLen));
+          },
+
+        }
+      };
+
+      const result = await WebAssembly.instantiateStreaming(fetch("game.wasm"), imports);
+
+      const wasm = result.instance.exports;
+      const inputPtr = wasm.input_state_ptr();
+      const wasmInput = new Float32Array(memory.buffer, inputPtr, 3);
+      const uint8View = new Uint8Array(memory.buffer);
+      const decoder = new TextDecoder("utf-8");
+      function readString(ptr, len) {
+        return decoder.decode(uint8View.subarray(ptr, ptr + len));
+      }
+
+      wasm.init();
+
+      function loop(timestamp) {
+        wasmInput[0] = inputView[0];
+        wasmInput[1] = inputView[1];
+        wasmInput[2] = inputView[2];
+        wasm.update(timestamp);
+        wasm.draw();
+        requestAnimationFrame(loop);
+      }
+
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+
+</html>
