@@ -1,6 +1,0 @@
-wiz.heatherspacek.com {
-    # Force specific MIME types
-    header /public/*.wasm {
-        Content-Type application/wasm
-    }
-}
