@@ -113,6 +113,8 @@
 
       const wasm = result.instance.exports;
       const inputPtr = wasm.input_state_ptr();
+      // const outboxPtr = wasm.outbox_ptr();
+      // const inboxPtr = wasm.inbox_ptr();
       const wasmInput = new Float32Array(memory.buffer, inputPtr, 3);
       const uint8View = new Uint8Array(memory.buffer);
       const decoder = new TextDecoder("utf-8");
