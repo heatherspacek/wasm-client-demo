@@ -1,7 +1,7 @@
 
 CC      = clang
 TARGET  = wasm32
-OUT     = game.wasm
+OUT     = public/game.wasm
 SRC     = game.c
 
 # -nostdlib          : no libc, no startup files -- we bring our own ABI
