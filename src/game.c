@@ -66,11 +66,11 @@ static _Bool DBG_TOGGLE = 0;
 #define MAX_BTNS 15
 #define MAX_SCREENS 6
 
-#define SCREEN_TITLE 0
-#define SCREEN_SETTINGS 1
-#define SCREEN_DRAFT_WEAP 2
-#define SCREEN_DRAFT_SPELLS 3
-#define SCREEN_COMBAT 4
+#define SCREEN_TITLE_ID 0
+#define SCREEN_SETTINGS_ID 1
+#define SCREEN_DRAFT_WEAP_ID 2
+#define SCREEN_DRAFT_SPELLS_ID 3
+#define SCREEN_COMBAT_ID 4
 
 typedef struct
 {
@@ -117,20 +117,17 @@ struct hoverbox
 #define SQ_SIZE 40
 struct hoverbox hoverboxes[N_HOV];
 
-// bool point_in_rect(int p_x, int p_y, )
-// {
-// }
-
-// bool mouse_collide()
-// {
-//     return point_in_rect()
-// }
-
-void cbk1()
+void cbk_goto_settings()
 {
-    js_log("clicked?", 9);
-    DBG_TOGGLE = !DBG_TOGGLE;
+    CURR_SCREEN = SCREEN_SETTINGS_ID;
 }
+
+void cbk_goto_title()
+{
+    CURR_SCREEN = SCREEN_TITLE_ID;
+}
+
+void dummy_cbk() {}
 
 void _init_ui_button(struct screen *target_scr,
                      int x, int y, int w, int h, String_View label, void *cbk)
@@ -143,13 +140,22 @@ void _init_ui_button(struct screen *target_scr,
 __attribute__((export_name("init"))) void init()
 {
     // TODO: loading bar, for when init gets huge!
-    struct screen title_screen;
+    struct screen screen_title;
+    struct screen screen_settings;
+    struct screen screen_draft_weapon;
 
-    _init_ui_button(&title_screen, 20, 205, 105, 35, SV("Start Game"), cbk1);
-    _init_ui_button(&title_screen, 20, 275, 105, 35, SV("Settings"), cbk1);
-    _init_ui_button(&title_screen, 20, 345, 105, 35, SV("DEBUG"), cbk1);
+    _init_ui_button(&screen_title, 20, 205, 105, 35, SV("Start Game"), dummy_cbk);
+    _init_ui_button(&screen_title, 20, 275, 105, 35, SV("Settings"), cbk_goto_settings);
+    _init_ui_button(&screen_title, 20, 345, 105, 35, SV("DEBUG"), dummy_cbk);
 
-    all_screens[SCREEN_TITLE] = title_screen;
+    _init_ui_button(&screen_settings, 160, 100, 35, 35, SV("<"), dummy_cbk);
+    _init_ui_button(&screen_settings, 195, 100, 35, 35, SV(">"), dummy_cbk);
+    _init_ui_button(&screen_settings, 160, 150, 50, 35, SV("..."), dummy_cbk);
+    _init_ui_button(&screen_settings, 120, 200, 105, 35, SV("Back to main menu"), cbk_goto_title);
+
+    all_screens[SCREEN_TITLE_ID] = screen_title;
+    all_screens[SCREEN_SETTINGS_ID] = screen_settings;
+    all_screens[SCREEN_DRAFT_WEAP_ID] = screen_draft_weapon;
 
     for (int i = 0; i < N_HOV; i++)
     {
@@ -179,21 +185,23 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
 
     // perform UI state updates for the current screen.
     struct screen this_scr = all_screens[CURR_SCREEN];
-    // later, loop over all buttons...
-    struct ui_button bxx = this_scr.buttons[0];
-    int right = bxx.x + bxx.w;
-    int bot = bxx.y + bxx.h;
-    int hov = inputs.mouse_x > (float)bxx.x &&
-              inputs.mouse_y > (float)bxx.y &&
-              inputs.mouse_x < (float)right &&
-              inputs.mouse_y < (float)bot;
-    int click = hov && inputs.mouse_buttons;
-    bxx.click_state = hov;
-    if (click)
-    {
-        bxx.cbk();
-    }
 
+    for (int i = 0; i < this_scr.n_buttons; i++)
+    {
+        struct ui_button bxx = this_scr.buttons[i];
+        int right = bxx.x + bxx.w;
+        int bot = bxx.y + bxx.h;
+        int hov = inputs.mouse_x > (float)bxx.x &&
+                  inputs.mouse_y > (float)bxx.y &&
+                  inputs.mouse_x < (float)right &&
+                  inputs.mouse_y < (float)bot;
+        int click = hov && inputs.mouse_buttons;
+        bxx.click_state = hov;
+        if (click)
+        {
+            bxx.cbk();
+        }
+    }
     FRAME_CNT++;
 }
 
