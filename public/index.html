@@ -14,33 +14,52 @@
 
     body {
       background: #0a0a0f;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
     }
 
     canvas {
       display: block;
-      border: 1px solid #222;
+      border: 1px solid #ffffff;
+      width: 640px;
+      margin: 1rem auto 1rem auto;
       /* cursor: none; */
     }
 
-    #err {
-      color: #f55;
+    p {
+      display: block;
+      color: rgb(185, 185, 185);
       font-family: monospace;
-      font-size: 13px;
-      padding: 1em;
-      position: absolute;
-      top: 1em;
-      left: 1em;
+      font-size: medium;
+      width: 80%;
+      margin: 1rem auto;
     }
   </style>
 </head>
 
 <body>
   <canvas id="c" width="640" height="480"></canvas>
-  <div id="err"></div>
+  <p>
+    The above HTML canvas is painted with a C program compiled to webassembly!
+    <br>
+    If you're like me, "webassembly" sounds(/sounded) like an appealing target,
+    but the specifics seemed odious (lock-in to strange SDKs; delegation to a
+    thick JS compatibility layer; some sort of malware called "NPM"...)
+  </p>
+  <p>
+    &nbsp;| <i>"There must be a better way!"</i> &mdash; Raymond Hettinger
+  </p>
+  <p>
+    The source code of this page contains a purpose-built JS shim layer that
+    imbues the compiled WASM application with mouse-tracking and canvas-drawing
+    powers! (&lt;100 lines at time of writing; if I add networking and
+    sprite-loading it'll get thicker.)
+  </p>
+  <p>
+    The C program is compiled with clang --target=wasm32. Amusingly, it does not
+    (and i think <i>cannot</i>) use the C standard library, including malloc.
+    (This takes the exercise in minimalism a bit more extreme than initially
+    intended...!)
+  </p>
+  <p><a href="https://heatherspacek.com" style="color:blanchedalmond">heatherspacek.com</a></p>
 
   <script>
     "use strict";
