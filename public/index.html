@@ -78,8 +78,17 @@
       inputView[0] = e.clientX - canvasRect.left;
       inputView[1] = e.clientY - canvasRect.top;
     });
-    canvas.addEventListener("pointerdown", e => { inputView[2] = inputView[2] | (1 << e.button); });
-    canvas.addEventListener("pointerup", e => { inputView[2] = inputView[2] & ~(1 << e.button); });
+    canvas.addEventListener("pointerdown", e => {
+      inputView[0] = e.clientX - canvasRect.left;
+      inputView[1] = e.clientY - canvasRect.top;
+      const bit = e.pointerType === "touch" ? 0 : e.button;
+      inputView[2] = inputView[2] | (1 << bit);
+    });
+
+    canvas.addEventListener("pointerup", e => {
+      const bit = e.pointerType === "touch" ? 0 : e.button;
+      inputView[2] = inputView[2] & ~(1 << bit);
+    });
     canvas.addEventListener("contextmenu", e => e.preventDefault());
 
     const memory = new WebAssembly.Memory({ initial: 16, maximum: 256 });
