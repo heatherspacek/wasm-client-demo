@@ -21,6 +21,7 @@
       border: 1px solid #ffffff;
       width: 640px;
       margin: 1rem auto 1rem auto;
+      touch-action: none;
       /* cursor: none; */
     }
 
@@ -80,8 +81,6 @@
     canvas.addEventListener("pointerdown", e => { inputView[2] = inputView[2] | (1 << e.button); });
     canvas.addEventListener("pointerup", e => { inputView[2] = inputView[2] & ~(1 << e.button); });
     canvas.addEventListener("contextmenu", e => e.preventDefault());
-
-    canvas.addEventListener('touchstart', (e) => { canvas.focus(); }, { passive: false });
 
     const memory = new WebAssembly.Memory({ initial: 16, maximum: 256 });
 
