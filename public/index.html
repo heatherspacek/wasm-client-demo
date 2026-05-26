@@ -114,12 +114,6 @@
             ctx.globalAlpha = 1.0;
           },
 
-          // js_draw_sprite(x, y, w, h, sx, sy, sw, sh)
-          // Blit a region (sx, sy, sw, sh) from the spritesheet to (x, y, w, h).
-          js_draw_sprite(x, y, w, h, sx, sy, sw, sh) {
-            ctx.drawImage(spriteSheet, sx, sy, sw, sh, x, y, w, h);
-          },
-
           // js_fill_text(textPtr, textLen, x, y, r, g, b, size)
           // Draw a UTF-8 string from Wasm linear memory.
           js_fill_text(textPtr, textLen, x, y, r, g, b, size) {
@@ -128,12 +122,11 @@
             ctx.fillText(readString(textPtr, textLen), x, y);
           },
 
-          // js_log(textPtr, textLen)
-          // Debug logger: call from C to write a string to the browser console.
-          // Free to remove once you no longer need it.
-          js_log(textPtr, textLen) {
+          js_log_s(textPtr, textLen) {
             console.log(readString(textPtr, textLen));
           },
+          js_log_i(value) { console.log(value | 0); },
+          js_log_f(value) { console.log(value); },
 
         }
       };

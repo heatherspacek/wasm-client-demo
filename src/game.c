@@ -10,7 +10,9 @@ extern void js_fill_text(const char *text, uint32_t len,
                          float x, float y,
                          float r, float g, float b,
                          float size);
-extern void js_log(const char *text, uint32_t len);
+extern void js_log_s(const char *text, uint32_t len);
+extern void js_log_f(float value);
+extern void js_log_i(int value);
 
 typedef struct
 {
@@ -195,9 +197,9 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
                   inputs.mouse_y > (float)bxx.y &&
                   inputs.mouse_x < (float)right &&
                   inputs.mouse_y < (float)bot;
-        int click = hov && inputs.mouse_buttons;
-        bxx.click_state = hov;
-        if (click)
+        // write back!
+        all_screens[CURR_SCREEN].buttons[i].click_state = hov;
+        if (hov && inputs.mouse_buttons)
         {
             bxx.cbk();
         }
