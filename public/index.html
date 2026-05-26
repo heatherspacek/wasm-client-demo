@@ -81,6 +81,8 @@
     canvas.addEventListener("pointerup", e => { inputView[2] = inputView[2] & ~(1 << e.button); });
     canvas.addEventListener("contextmenu", e => e.preventDefault());
 
+    canvas.addEventListener('touchstart', (e) => { canvas.focus(); }, { passive: false });
+
     const memory = new WebAssembly.Memory({ initial: 16, maximum: 256 });
 
     (async () => {
