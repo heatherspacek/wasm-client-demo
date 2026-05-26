@@ -238,8 +238,8 @@ __attribute__((export_name("draw"))) void draw(void)
     for (int i = 0; i < this_scr.n_buttons; i++)
     {
         struct ui_button bxx = this_scr.buttons[i];
-        js_draw_rect(bxx.x, bxx.y, bxx.w, bxx.h,
-                     0.2f, 0.4f + bxx.click_state * 0.4f, 0.8f, 0.6f);
+        float colchannel = 0.4f + (bxx.click_state * 0.4f) + (0.2f * (bxx.click_state && inputs.mouse_buttons));
+        js_draw_rect(bxx.x, bxx.y, bxx.w, bxx.h, 0.2f, colchannel, 0.8f, 0.6f);
         js_fill_text(bxx.label.data, bxx.label.count,
                      bxx.x + 10, bxx.y + 22, 1.0f, 1.0f, 1.0f, 12.0f);
     }
