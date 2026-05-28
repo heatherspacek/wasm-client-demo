@@ -10,6 +10,16 @@ extern void js_fill_text(const char *text, uint32_t len,
                          float x, float y,
                          float r, float g, float b,
                          float size);
+extern void js_draw_sprite(float dest_x, float dest_y, float dest_w, float dest_h,
+                           float src_x, float src_y, float src_w, float src_h);
+
+#define TILE_W 32.0f
+#define TILE_H 32.0f
+
+#define DRAW_SPRITE(dest_x, dest_y, col, row)      \
+    js_draw_sprite(dest_x, dest_y, TILE_W, TILE_H, \
+                   (col) * TILE_W, (row) * TILE_H, TILE_W, TILE_H)
+
 extern void js_log_s(const char *text, uint32_t len);
 extern void js_log_f(float value);
 extern void js_log_i(int value);
@@ -213,6 +223,11 @@ __attribute__((export_name("draw"))) void draw(void)
 
     js_fill_text("wasm client demo", 16,
                  160, 50, 0.7f, 0.8f, 0.6f, 32.0f);
+
+    js_draw_sprite(
+        120, 20, 32, 32,
+        FRAME_CNT % 32, FRAME_CNT % 32,
+        32, 32);
 
     // mouse pointer
     js_draw_rect(inputs.mouse_x - 1.0f, inputs.mouse_y - 1.0f, 3.0f, 3.0f,

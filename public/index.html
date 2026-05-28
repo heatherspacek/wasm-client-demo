@@ -124,6 +124,11 @@
             ctx.fillText(readString(textPtr, textLen), x, y);
           },
 
+          js_draw_sprite(dest_x, dest_y, dest_w, dest_h, src_x, src_y, src_w, src_h) {
+            ctx.drawImage(spritesheet, src_x, src_y, src_w, src_h,
+              dest_x, dest_y, dest_w, dest_h);
+          },
+
           js_log_s(textPtr, textLen) {
             console.log(readString(textPtr, textLen));
           },
@@ -133,9 +138,17 @@
         }
       };
 
-      const result = await WebAssembly.instantiateStreaming(fetch("game.wasm"), imports);
+      async function loadImage(url) {
+        const blob = await fetch(url).then(r => r.blob());
+        return createImageBitmap(blob);
+      }
 
-      const wasm = result.instance.exports;
+      const [app, spritesheet] = await Promise.all([
+        WebAssembly.instantiateStreaming(fetch("game.wasm"), imports),
+        loadImage("spritesheet.png"),
+      ]);
+
+      const wasm = app.instance.exports;
       const inputPtr = wasm.input_state_ptr();
       // const outboxPtr = wasm.outbox_ptr();
       // const inboxPtr = wasm.inbox_ptr();
