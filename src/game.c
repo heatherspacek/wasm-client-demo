@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "font_lookout.h" // private! font licensing :)
 
 // Drawing
 extern void js_clear(float r, float g, float b);
@@ -12,6 +13,8 @@ extern void js_fill_text(const char *text, uint32_t len,
                          float size);
 extern void js_draw_sprite(float dest_x, float dest_y, float dest_w, float dest_h,
                            float src_x, float src_y, float src_w, float src_h);
+extern void js_draw_glyph_8wide(const uint8_t *bits, float rows, float x, float y);
+extern void js_draw_glyph_16wide(const uint16_t *bits, float rows, float x, float y);
 
 #define TILE_W 32.0f
 #define TILE_H 32.0f
@@ -225,7 +228,7 @@ __attribute__((export_name("draw"))) void draw(void)
                  160, 50, 0.7f, 0.8f, 0.6f, 32.0f);
 
     js_draw_sprite(
-        120, 20, 32, 32,
+        120, 120, 32, 32,
         FRAME_CNT % 32, FRAME_CNT % 32,
         32, 32);
 
@@ -247,6 +250,9 @@ __attribute__((export_name("draw"))) void draw(void)
             300, 25,
             0.7f, 1.0f, 0.7f, 16.0f);
     }
+
+    js_draw_glyph_8wide(glyph_A8, 7, 330, 330);
+    js_draw_glyph_16wide(glyph_A16, 14, 360, 330);
 
     struct screen this_scr = all_screens[CURR_SCREEN];
 

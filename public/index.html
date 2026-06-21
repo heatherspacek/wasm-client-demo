@@ -99,16 +99,11 @@
       const imports = {
         env: {
           memory,
-
-          // js_clear(r, g, b)
-          // Fill the canvas with a solid colour. Call once at the top of draw().
           js_clear(r, g, b) {
             ctx.fillStyle = `rgb(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
           },
 
-          // js_draw_rect(x, y, w, h, r, g, b, a)
-          // Filled axis-aligned rectangle with RGBA colour.
           js_draw_rect(x, y, w, h, r, g, b, a) {
             ctx.globalAlpha = a;
             ctx.fillStyle = `rgb(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0})`;
@@ -116,12 +111,45 @@
             ctx.globalAlpha = 1.0;
           },
 
-          // js_fill_text(textPtr, textLen, x, y, r, g, b, size)
           // Draw a UTF-8 string from Wasm linear memory.
           js_fill_text(textPtr, textLen, x, y, r, g, b, size) {
             ctx.font = `${size}px monospace`;
             ctx.fillStyle = `rgb(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0})`;
             ctx.fillText(readString(textPtr, textLen), x, y);
+          },
+
+          js_draw_glyph_8wide(bitsPtr, nrows, x, y) {
+            const bits = new Uint8Array(memory.buffer, bitsPtr, nrows);
+            const buf = new ArrayBuffer(8 * nrows * 4);
+            const pixels = new Uint8ClampedArray(buf);
+            const words = new Uint32Array(buf);  // simultaneous views trick :3
+
+            for (let row = 0; row < nrows; row++) {
+              const byte = bits[row];
+              for (let col = 0; col < 8; col++) {
+                if (byte & (0x80 >> col)) {
+                  words[row * 8 + col] = 0xFFFFFFFF;
+                }
+              }
+            }
+            ctx.putImageData(new ImageData(pixels, 8, nrows), x | 0, y | 0);
+          },
+
+          js_draw_glyph_16wide(bitsPtr, nrows, x, y) {
+            const bits = new Uint16Array(memory.buffer, bitsPtr, 16);
+            const buf = new ArrayBuffer(16 * nrows * 4);
+            const pixels = new Uint8ClampedArray(buf);
+            const words = new Uint32Array(buf);  // simultaneous views trick :3
+
+            for (let row = 0; row < nrows; row++) {
+              const byte = bits[row];
+              for (let col = 0; col < 16; col++) {
+                if (byte & (0x8000 >> col)) {
+                  words[row * 16 + col] = 0xFFFFFFFF;
+                }
+              }
+            }
+            ctx.putImageData(new ImageData(pixels, 16, nrows), x | 0, y | 0);
           },
 
           js_draw_sprite(dest_x, dest_y, dest_w, dest_h, src_x, src_y, src_w, src_h) {
