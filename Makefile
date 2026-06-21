@@ -2,7 +2,8 @@
 CC      = clang
 TARGET  = wasm32
 OUT     = public/game.wasm
-SRC     = src/*.c 
+INCLUDE = private
+SRC     = src/*.c
 
 # -nostdlib          : no libc, no startup files -- we bring our own ABI
 # --no-entry         : no _start / main required
@@ -13,6 +14,7 @@ SRC     = src/*.c
 CFLAGS = \
 	--target=$(TARGET) \
 	-nostdlib \
+	-I$(INCLUDE) \
 	-Wall \
 	-Wl,--no-entry \
 	-Wl,--export-dynamic \
