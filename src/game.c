@@ -171,7 +171,7 @@ void _render_sv(int x, int y, String_View sv, int doublesize)
                 if (doublesize)
                 {
                     js_draw_glyph_16wide(match_g.data_16, 2 * match_g.rows, x + x_offset, y);
-                    x_offset += 2 * match_g.spacing;
+                    x_offset += 2 * (match_g.spacing - 1);
                 }
                 else
                 {
