@@ -152,6 +152,33 @@ void _init_ui_button(struct screen *target_scr,
     target_scr->n_buttons++;
 }
 
+void _render_sv(int x, int y, String_View sv, int doublesize)
+{
+    int x_offset = 0;
+    for (int i = 0; i < sv.count; i++)
+    {
+        char thischar = sv.data[i];
+        for (int g_i = 0; g_i < N_CHARS; g_i++)
+        {
+            Glyph match_g = all_glyphs[g_i];
+            if (match_g.character == thischar)
+            {
+                if (doublesize)
+                {
+                    js_draw_glyph_16wide(match_g.data_16, 2 * match_g.rows, x + x_offset, y);
+                    x_offset += 2 * match_g.spacing;
+                }
+                else
+                {
+                    js_draw_glyph_8wide(match_g.data_8, match_g.rows, x + x_offset, y);
+                    x_offset += match_g.spacing;
+                }
+                break;
+            }
+        }
+    }
+}
+
 __attribute__((export_name("init"))) void init()
 {
     // TODO: loading bar, for when init gets huge!
@@ -251,8 +278,9 @@ __attribute__((export_name("draw"))) void draw(void)
             0.7f, 1.0f, 0.7f, 16.0f);
     }
 
-    js_draw_glyph_8wide(glyph_A8, 7, 330, 330);
-    js_draw_glyph_16wide(glyph_A16, 14, 360, 330);
+    // js_draw_glyph_8wide(glyph_A8, 7, 330, 330);
+    // js_draw_glyph_16wide(glyph_A16, 14, 360, 330);
+    _render_sv(0, 0, SV("ABABA"), 1);
 
     struct screen this_scr = all_screens[CURR_SCREEN];
 
