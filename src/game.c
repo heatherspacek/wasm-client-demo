@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "font_lookout.h" // private! font licensing :)
+#include "font_lookout_GEN.h" // private! font licensing :)
 
 // Drawing
 extern void js_clear(float r, float g, float b);
@@ -158,6 +158,11 @@ void _render_sv(int x, int y, String_View sv, int doublesize)
     for (int i = 0; i < sv.count; i++)
     {
         char thischar = sv.data[i];
+        if (thischar == ' ')
+        {
+            x_offset += 5 * (doublesize + 1);
+            continue;
+        }
         for (int g_i = 0; g_i < N_CHARS; g_i++)
         {
             Glyph match_g = all_glyphs[g_i];
@@ -255,7 +260,7 @@ __attribute__((export_name("draw"))) void draw(void)
                  160, 50, 0.7f, 0.8f, 0.6f, 32.0f);
 
     js_draw_sprite(
-        120, 120, 32, 32,
+        32, 32, 32, 32,
         FRAME_CNT % 32, FRAME_CNT % 32,
         32, 32);
 
@@ -278,9 +283,13 @@ __attribute__((export_name("draw"))) void draw(void)
             0.7f, 1.0f, 0.7f, 16.0f);
     }
 
-    // js_draw_glyph_8wide(glyph_A8, 7, 330, 330);
-    // js_draw_glyph_16wide(glyph_A16, 14, 360, 330);
-    _render_sv(0, 0, SV("ABABA"), 1);
+    _render_sv(145, 120, SV("\"Raw\"(?) Font rendering test!!!"), 0);
+    _render_sv(145, 120 + 16, SV("This is a font I purchased from an independent creator, who specified that"), 0);
+    _render_sv(145, 120 + 32, SV("it should not be distributed in web projects, but it could be *compiled* into"), 0);
+    _render_sv(145, 120 + 48, SV("applications... so... I baked it into the WASM as binary data xD"), 0);
+    _render_sv(145, 120 + 64, SV(""), 0);
+    _render_sv(145, 120 + 80, SV("I used a 125-line Python script to generate a 3500-line C header that"), 0);
+    _render_sv(145, 120 + 96, SV("encodes the pixel font as data... COOL HUH?!?!?!? :D"), 0);
 
     struct screen this_scr = all_screens[CURR_SCREEN];
 
