@@ -25,6 +25,7 @@
       -webkit-user-select: none;
       user-select: none;
       /* cursor: none; */
+      /* image-rendering: ; */
     }
 
     p {
@@ -136,7 +137,7 @@
           },
 
           js_draw_glyph_16wide(bitsPtr, nrows, x, y) {
-            const bits = new Uint16Array(memory.buffer, bitsPtr, 16);
+            const bits = new Uint16Array(memory.buffer, bitsPtr, nrows);
             const buf = new ArrayBuffer(16 * nrows * 4);
             const pixels = new Uint8ClampedArray(buf);
             const words = new Uint32Array(buf);  // simultaneous views trick :3
@@ -188,7 +189,7 @@
       }
 
       wasm.init();
-
+      const dps = window.devicePixelRatio;  // need to use this later for pix-perfect rendering.
       function loop(timestamp) {
         wasmInput[0] = inputView[0];
         wasmInput[1] = inputView[1];

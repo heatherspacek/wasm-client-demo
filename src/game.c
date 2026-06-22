@@ -176,7 +176,7 @@ void _render_sv(int x, int y, String_View sv, int doublesize)
                 else
                 {
                     js_draw_glyph_8wide(match_g.data_8, match_g.rows, x + x_offset, y);
-                    x_offset += match_g.spacing;
+                    x_offset += match_g.spacing - 1;
                 }
                 break;
             }
@@ -287,9 +287,10 @@ __attribute__((export_name("draw"))) void draw(void)
     _render_sv(145, 120 + 16, SV("This is a font I purchased from an independent creator, who specified that"), 0);
     _render_sv(145, 120 + 32, SV("it should not be distributed in web projects, but it could be *compiled* into"), 0);
     _render_sv(145, 120 + 48, SV("applications... so... I baked it into the WASM as binary data xD"), 0);
-    _render_sv(145, 120 + 64, SV(""), 0);
+    _render_sv(145, 120 + 64, SV(" "), 0);
     _render_sv(145, 120 + 80, SV("I used a 125-line Python script to generate a 3500-line C header that"), 0);
-    _render_sv(145, 120 + 96, SV("encodes the pixel font as data... COOL HUH?!?!?!? :D"), 0);
+    _render_sv(145, 120 + 96, SV("encodes the pixel font as data... COOL HUH?!?!?? :D"), 0);
+    _render_sv(145, 120 + 122, SV("And here's double-sized~ *@%&$"), 1);
 
     struct screen this_scr = all_screens[CURR_SCREEN];
 
