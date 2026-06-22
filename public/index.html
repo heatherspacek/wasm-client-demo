@@ -25,7 +25,7 @@
       -webkit-user-select: none;
       user-select: none;
       /* cursor: none; */
-      /* image-rendering: ; */
+      image-rendering: pixelated;
     }
 
     p {
@@ -69,6 +69,8 @@
     "use strict";
 
     const canvas = document.getElementById("c");
+    const cwidth = canvas.width;
+    const cheight = canvas.height;
     const ctx = canvas.getContext("2d", { desynchronized: true });
 
     let canvasRect = canvas.getBoundingClientRect();
@@ -189,7 +191,13 @@
       }
 
       wasm.init();
-      const dps = window.devicePixelRatio;  // need to use this later for pix-perfect rendering.
+      // https://gist.github.com/callumlocke/cc258a193839691f60dd
+      const dps = window.devicePixelRatio || 1;
+      canvas.width = cwidth * dps
+      canvas.height = cheight * dps
+      canvas.style.width = cwidth + 'px'
+      canvas.style.height = cheight + 'px'
+      ctx.scale(dps, dps)
       function loop(timestamp) {
         wasmInput[0] = inputView[0];
         wasmInput[1] = inputView[1];
