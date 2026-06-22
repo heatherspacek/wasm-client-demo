@@ -3,7 +3,7 @@ from PIL import Image
 fontpath_in = "private/font_lookout_7.png"
 headerpath_out = "private/font_lookout_GEN.h"
 spritesheet_grid = (16, 16)
-char_limits = (8, 16)  # clumsy rn-- we always assume the X is 8 here...
+char_limits = (1, 0, 9, 16)
 charmap = [
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
     """abcdefghijklmnopqrstuvwxyz""",
@@ -63,12 +63,17 @@ def get_spacing(test_char: str) -> int:
 
 def rect_to_pixelslist(glyph: Image) -> list[list[int]]:
     data = []
-    for row in range(char_limits[1]):
+    for row in range((char_limits[3] - char_limits[1])):
         rxx = []
-        for col in range(char_limits[0]):
+        for col in range((char_limits[2] - char_limits[0])):
             rxx.append(int(glyph.getpixel([col, row]) == (255, 255, 255, 255)))
         data.append(rxx)
     return data
+
+
+def pixelslist_to_literal(pixlist: list[list[int]]) -> str:
+    "This will be illegible to me in five minutes but I'm on a hot streak."
+    return ",\n".join(["0b" + "".join([str(c) for c in row]) for row in pixlist])
 
 
 def write_dataheader(registry: dict[str, list[list[int]]]):
@@ -88,13 +93,13 @@ typedef struct
     with open(headerpath_out, "w") as fp:
         fp.write(PREAMBLE)
         for i, (k, v) in enumerate(registry.items()):
-            fp.write(DEF_8(index=i, n_rows=len(v), data="..."))
-            fp.write(DEF_16(index=i, n_rows=2 * len(v), data="..."))
+            fp.write(DEF_8(index=i, n_rows=len(v), data=pixelslist_to_literal(v)))
+            fp.write(DEF_16(index=i, n_rows=2 * len(v), data=pixelslist_to_literal(v)))
         # Then, write the mapping table:
         fp.write("static const Glyph all_glyphs[N_CHARS] = {\n")
         for i, (k, v) in enumerate(registry.items()):
             fp.write(
-                f"{{'{c_escaped(k)}', {get_spacing(k)}, 7, glyph_{i}_8, glyph_{i}_16}},\n"
+                f"{{'{c_escaped(k)}', {get_spacing(k)}, {len(v)}, glyph_{i}_8, glyph_{i}_16}},\n"
             )
         fp.write("};\n")
 
@@ -114,7 +119,7 @@ if __name__ == "__main__":
             xcorn, ycorn = xg * letter_i, yg * row_i
             letter_img = fontimg.crop([xcorn, ycorn, xcorn + xg, ycorn + yg])
             # clumsy rn: crop to left half of the grid. buh
-            letter_sub = letter_img.crop([0, 0, *char_limits])
+            letter_sub = letter_img.crop(char_limits)
             registry[letter] = rect_to_pixelslist(letter_sub)
 
     write_dataheader(registry=registry)
