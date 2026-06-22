@@ -76,6 +76,14 @@ def pixelslist_to_literal(pixlist: list[list[int]]) -> str:
     return ",\n".join(["0b" + "".join([str(c) for c in row]) for row in pixlist])
 
 
+def pixelslist_to_lit16(pixlist: list[list[int]]) -> str:
+    list1 = ["0b" + "".join([str(c) + str(c) for c in row]) for row in pixlist]
+    list2 = []
+    for elem in list1:
+        list2.extend([elem, elem])
+    return ",\n".join(list2)
+
+
 def write_dataheader(registry: dict[str, list[list[int]]]):
     PREAMBLE = f"""\
 #include <stdint.h>
@@ -94,7 +102,7 @@ typedef struct
         fp.write(PREAMBLE)
         for i, (k, v) in enumerate(registry.items()):
             fp.write(DEF_8(index=i, n_rows=len(v), data=pixelslist_to_literal(v)))
-            fp.write(DEF_16(index=i, n_rows=2 * len(v), data=pixelslist_to_literal(v)))
+            fp.write(DEF_16(index=i, n_rows=2 * len(v), data=pixelslist_to_lit16(v)))
         # Then, write the mapping table:
         fp.write("static const Glyph all_glyphs[N_CHARS] = {\n")
         for i, (k, v) in enumerate(registry.items()):
