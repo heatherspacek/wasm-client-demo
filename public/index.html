@@ -21,7 +21,7 @@
       border: 1px solid #ffffff;
       width: 640px;
       margin: 1rem auto 1rem auto;
-      touch-action: none;
+      touch-action: [pinch-zoom];
       -webkit-user-select: none;
       user-select: none;
       /* cursor: none; */
@@ -97,6 +97,11 @@
     canvas.addEventListener("contextmenu", e => e.preventDefault());
 
     const memory = new WebAssembly.Memory({ initial: 16, maximum: 256 });
+    const pixelBuf = new ArrayBuffer(2048);
+    const glyphPixels = new Uint8ClampedArray(pixelBuf);
+    const glyphWords = new Uint32Array(pixelBuf);
+    const imgData8 = new ImageData(new Uint8ClampedArray(pixelBuf, 0, 8 * 16 * 4), 8, 16);
+    const imgData16 = new ImageData(new Uint8ClampedArray(pixelBuf, 0, 16 * 32 * 4), 16, 32);
 
     (async () => {
       const imports = {
@@ -123,36 +128,31 @@
 
           js_draw_glyph_8wide(bitsPtr, nrows, x, y) {
             const bits = new Uint8Array(memory.buffer, bitsPtr, nrows);
-            const buf = new ArrayBuffer(8 * nrows * 4);
-            const pixels = new Uint8ClampedArray(buf);
-            const words = new Uint32Array(buf);  // simultaneous views trick :3
+            glyphWords.fill(0, 0, nrows * 8);
 
             for (let row = 0; row < nrows; row++) {
               const byte = bits[row];
               for (let col = 0; col < 8; col++) {
                 if (byte & (0x80 >> col)) {
-                  words[row * 8 + col] = 0xFFFFFFFF;
+                  glyphWords[row * 8 + col] = 0xFFFFFFFF;
                 }
               }
             }
-            ctx.putImageData(new ImageData(pixels, 8, nrows), x | 0, y | 0);
+            ctx.putImageData(imgData8, x | 0, y | 0, 0, 0, 8, nrows);
           },
 
           js_draw_glyph_16wide(bitsPtr, nrows, x, y) {
             const bits = new Uint16Array(memory.buffer, bitsPtr, nrows);
-            const buf = new ArrayBuffer(16 * nrows * 4);
-            const pixels = new Uint8ClampedArray(buf);
-            const words = new Uint32Array(buf);  // simultaneous views trick :3
-
+            glyphWords.fill(0, 0, nrows * 16);
             for (let row = 0; row < nrows; row++) {
               const byte = bits[row];
               for (let col = 0; col < 16; col++) {
                 if (byte & (0x8000 >> col)) {
-                  words[row * 16 + col] = 0xFFFFFFFF;
+                  glyphWords[row * 16 + col] = 0xFFFFFFFF;
                 }
               }
             }
-            ctx.putImageData(new ImageData(pixels, 16, nrows), x | 0, y | 0);
+            ctx.putImageData(imgData16, x | 0, y | 0, 0, 0, 16, nrows);
           },
 
           js_draw_sprite(dest_x, dest_y, dest_w, dest_h, src_x, src_y, src_w, src_h) {
