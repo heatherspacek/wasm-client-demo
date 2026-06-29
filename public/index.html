@@ -39,7 +39,7 @@
 </head>
 
 <body>
-  <canvas id="c" width="640" height="480"></canvas>
+  <canvas id="c"></canvas>
   <p>
     The above HTML canvas is painted with a C program compiled to webassembly!
     <br>
@@ -72,6 +72,15 @@
     const cheight = canvas.height;
     const ctx = canvas.getContext("2d", { desynchronized: true });
 
+    const pixelScale = window.devicePixelRatio || 1;
+    const LOGICAL_W = 640;
+    const LOGICAL_H = 480;
+    canvas.width = LOGICAL_W * pixelScale;
+    canvas.height = LOGICAL_H * pixelScale;
+    canvas.style.width = LOGICAL_W + "px";
+    canvas.style.height = LOGICAL_H + "px";
+    ctx.scale(pixelScale, pixelScale);
+
     let canvasRect = canvas.getBoundingClientRect();
     const refreshRect = () => { canvasRect = canvas.getBoundingClientRect(); };
     window.addEventListener("resize", refreshRect);
@@ -101,6 +110,8 @@
     const glyphWords = new Uint32Array(pixelBuf);
     const imgData8 = new ImageData(new Uint8ClampedArray(pixelBuf, 0, 8 * 16 * 4), 8, 16);
     const imgData16 = new ImageData(new Uint8ClampedArray(pixelBuf, 0, 16 * 32 * 4), 16, 32);
+    const glyphCanvas = new OffscreenCanvas(16, 32);
+    const glyphCtx = glyphCanvas.getContext("2d");
 
     (async () => {
       const imports = {
@@ -137,7 +148,8 @@
                 }
               }
             }
-            ctx.putImageData(imgData8, x | 0, y | 0, 0, 0, 8, nrows);
+            glyphCtx.putImageData(imgData8, 0, 0, 0, 0, 8, nrows);
+            ctx.drawImage(glyphCanvas, 0, 0, 8, nrows, x | 0, y | 0, 8, nrows);
           },
 
           js_draw_glyph_16wide(bitsPtr, nrows, x, y) {
@@ -151,7 +163,8 @@
                 }
               }
             }
-            ctx.putImageData(imgData16, x | 0, y | 0, 0, 0, 16, nrows);
+            glyphCtx.putImageData(imgData16, 0, 0, 0, 0, 16, nrows);
+            ctx.drawImage(glyphCanvas, 0, 0, 16, nrows, x | 0, y | 0, 16, nrows);
           },
 
           js_draw_sprite(dest_x, dest_y, dest_w, dest_h, src_x, src_y, src_w, src_h) {
@@ -182,6 +195,7 @@
       const inputPtr = wasm.input_state_ptr();
       // const outboxPtr = wasm.outbox_ptr();
       // const inboxPtr = wasm.inbox_ptr();
+
       const wasmInput = new Float32Array(memory.buffer, inputPtr, 3);
       const uint8View = new Uint8Array(memory.buffer);
       const decoder = new TextDecoder("utf-8");
@@ -190,13 +204,7 @@
       }
 
       wasm.init();
-      // https://gist.github.com/callumlocke/cc258a193839691f60dd
-      const dps = window.devicePixelRatio || 1;
-      canvas.width = cwidth * dps
-      canvas.height = cheight * dps
-      canvas.style.width = cwidth + 'px'
-      canvas.style.height = cheight + 'px'
-      ctx.scale(dps, dps)
+
       function loop(timestamp) {
         wasmInput[0] = inputView[0];
         wasmInput[1] = inputView[1];
