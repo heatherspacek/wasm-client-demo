@@ -1,9 +1,9 @@
 from PIL import Image
 
-fontpath_in = "private/font_lookout_7.png"
-headerpath_out = "private/font_lookout_GEN.h"
+fontpath_in = "private/scratch1.png"
+headerpath_out = "private/font_myscratch.h"
 spritesheet_grid = (16, 16)
-char_limits = (1, 0, 9, 16)
+char_limits = (0, 0, 8, 16)
 charmap = [
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
     """abcdefghijklmnopqrstuvwxyz""",

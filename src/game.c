@@ -1,31 +1,14 @@
 #include <stdint.h>
 #include "font_lookout_GEN.h" // private! font licensing :)
 
-// Drawing
-extern void js_clear(float r, float g, float b);
-extern void js_draw_rect(float x, float y, float w, float h,
-                         float r, float g, float b, float a);
-extern void js_draw_sprite(float x, float y, float w, float h,
-                           float sx, float sy, float sw, float sh);
-extern void js_fill_text(const char *text, uint32_t len,
-                         float x, float y,
-                         float r, float g, float b,
-                         float size);
-extern void js_draw_sprite(float dest_x, float dest_y, float dest_w, float dest_h,
-                           float src_x, float src_y, float src_w, float src_h);
-extern void js_draw_glyph_8wide(const uint8_t *bits, float rows, float x, float y);
-extern void js_draw_glyph_16wide(const uint16_t *bits, float rows, float x, float y);
-
-#define TILE_W 32.0f
-#define TILE_H 32.0f
-
-#define DRAW_SPRITE(dest_x, dest_y, col, row)      \
-    js_draw_sprite(dest_x, dest_y, TILE_W, TILE_H, \
-                   (col) * TILE_W, (row) * TILE_H, TILE_W, TILE_H)
+#define SCR_W 640
+#define SCR_H 480
 
 extern void js_log_s(const char *text, uint32_t len);
 extern void js_log_f(float value);
 extern void js_log_i(int value);
+
+typedef uint32_t Pixel;
 
 typedef struct
 {
@@ -54,6 +37,7 @@ typedef struct
 static Outbox outbox = {0};
 static Inbox inbox = {0};
 static InputState inputs = {0};
+static Pixel scr_buf[SCR_W * SCR_H] = {0};
 
 __attribute__((export_name("outbox_ptr")))
 uint32_t
@@ -69,6 +53,9 @@ input_state_ptr(void)
 {
     return (uint32_t)(uintptr_t)&inputs;
 }
+__attribute__((export_name("screenbuffer_ptr")))
+uint32_t
+outbox_ptr(void) { return (uint32_t)(uintptr_t)&scr_buf; }
 
 ////////////////////////////////////////////////////////////////////////
 // ################################################################## //
@@ -118,19 +105,6 @@ struct screen
     int n_buttons;
 };
 static struct screen all_screens[MAX_SCREENS];
-
-struct hoverbox
-{
-    int x;
-    int y;
-    int w;
-    int h;
-    _Bool state;
-};
-
-#define N_HOV 10
-#define SQ_SIZE 40
-struct hoverbox hoverboxes[N_HOV];
 
 void cbk_goto_settings()
 {
@@ -254,52 +228,7 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
 
 __attribute__((export_name("draw"))) void draw(void)
 {
-    js_clear(0.08f, 0.08f, 0.12f);
-
-    js_fill_text("wasm client demo", 16,
-                 160, 50, 0.7f, 0.8f, 0.6f, 32.0f);
-
-    js_draw_sprite(
-        32, 32, 32, 32,
-        FRAME_CNT % 32, FRAME_CNT % 32,
-        32, 32);
-
-    // mouse pointer
-    js_draw_rect(inputs.mouse_x - 1.0f, inputs.mouse_y - 1.0f, 3.0f, 3.0f,
-                 1.0f, 1.0f, 1.0f, 0.7f);
-
-    for (int i = 0; i < N_HOV; i++)
-    {
-        js_draw_rect(hoverboxes[i].x, hoverboxes[i].y, hoverboxes[i].w, hoverboxes[i].h,
-                     0.1f, 0.5f + hoverboxes[i].state * 0.4f, 1.0f, 1.0f);
-    }
-
-    const char *dbg = "u clicked >_>";
-    if (DBG_TOGGLE)
-    {
-        js_fill_text(
-            dbg, 13,
-            300, 25,
-            0.7f, 1.0f, 0.7f, 16.0f);
-    }
-
     _render_sv(145, 120, SV("\"Raw\"(?) Font rendering test!!!"), 0);
-    _render_sv(145, 120 + 16, SV("This is a font I purchased from an independent creator, who specified that"), 0);
-    _render_sv(145, 120 + 32, SV("it should not be distributed in web projects, but it could be *compiled* into"), 0);
-    _render_sv(145, 120 + 48, SV("applications... so... I baked it into the WASM as binary data xD"), 0);
-    _render_sv(145, 120 + 64, SV(" "), 0);
-    _render_sv(145, 120 + 80, SV("I used a 125-line Python script to generate a 3500-line C header that"), 0);
-    _render_sv(145, 120 + 96, SV("encodes the pixel font as data... COOL HUH?!?!?? :D"), 0);
-    _render_sv(145, 120 + 122, SV("And here's double-sized~ *@%&$"), 1);
 
-    struct screen this_scr = all_screens[CURR_SCREEN];
-
-    for (int i = 0; i < this_scr.n_buttons; i++)
-    {
-        struct ui_button bxx = this_scr.buttons[i];
-        float colchannel = 0.4f + (bxx.click_state * 0.4f) + (0.2f * (bxx.click_state && inputs.mouse_buttons));
-        js_draw_rect(bxx.x, bxx.y, bxx.w, bxx.h, 0.2f, colchannel, 0.8f, 0.6f);
-        js_fill_text(bxx.label.data, bxx.label.count,
-                     bxx.x + 10, bxx.y + 22, 1.0f, 1.0f, 1.0f, 12.0f);
-    }
+    // struct screen this_scr = all_screens[CURR_SCREEN];
 }

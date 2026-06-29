@@ -1,6 +1,5 @@
 
 CC      = clang
-TARGET  = wasm32
 OUT     = public/game.wasm
 INCLUDE = private
 SRC     = src/*.c
@@ -9,10 +8,9 @@ SRC     = src/*.c
 # --no-entry         : no _start / main required
 # --export-dynamic   : keep all __attribute__((export_name)) exports
 # -Wl,--allow-undefined : let the linker accept the js_* imports unresolved
-# -O2                : optimise; swap for -g for debug info (larger file)
 
 CFLAGS = \
-	--target=$(TARGET) \
+	--target=wasm32 \
 	-nostdlib \
 	-I$(INCLUDE) \
 	-Wall \

@@ -72,14 +72,15 @@
     const cheight = canvas.height;
     const ctx = canvas.getContext("2d", { desynchronized: true });
 
-    const pixelScale = window.devicePixelRatio || 1;
+    const dpr = window.devicePixelRatio || 1;
+    const integerScale = Math.ceil(dpr);
     const LOGICAL_W = 640;
     const LOGICAL_H = 480;
-    canvas.width = LOGICAL_W * pixelScale;
-    canvas.height = LOGICAL_H * pixelScale;
-    canvas.style.width = LOGICAL_W + "px";
-    canvas.style.height = LOGICAL_H + "px";
-    ctx.scale(pixelScale, pixelScale);
+    canvas.width = LOGICAL_W * integerScale;
+    canvas.height = LOGICAL_H * integerScale;
+    canvas.style.width = (canvas.width / dpr) + "px";
+    canvas.style.height = (canvas.height / dpr) + "px";
+    ctx.imageSmoothingEnabled = false;
 
     let canvasRect = canvas.getBoundingClientRect();
     const refreshRect = () => { canvasRect = canvas.getBoundingClientRect(); };
@@ -204,6 +205,9 @@
       }
 
       wasm.init();
+      const bufferPtr = wasm.get_framebuffer_ptr();
+      const bufferSize = LOGICAL_W * LOGICAL_H * 4;
+      const wasmPixels = new Uint8ClampedArray(memory.buffer, bufferPtr, bufferSize);
 
       function loop(timestamp) {
         wasmInput[0] = inputView[0];
@@ -211,6 +215,11 @@
         wasmInput[2] = inputView[2];
         wasm.update(timestamp);
         wasm.draw();
+        screenImageData.data.set(wasmPixels);
+        offscreenCtx.putImageData(screenImageData, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
+
         requestAnimationFrame(loop);
       }
 

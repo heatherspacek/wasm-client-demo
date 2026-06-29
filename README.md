@@ -11,5 +11,7 @@ A thin JS shim layer to provide interactivity and drawing for a C program compil
 - No heap allocations xD
 
 ### Dependencies
-- Clang and LLD
-- Something to serve the page with (e.g. Python -> `uv run python -m http.server 8027`)
+- clang
+- LLD
+- Something to serve the page with (locally, I reach for Python -> `python -m http.server`)
+- *(optional)* Something to bake resources into headers; I use Python (see `/scripts`).
