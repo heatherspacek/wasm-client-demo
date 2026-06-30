@@ -1,8 +1,11 @@
 #include <stdint.h>
-#include "font_lookout_GEN.h" // private! font licensing :)
+#include "font_myscratch.h" // private! font licensing :)
 
 #define SCR_W 640
 #define SCR_H 480
+#define SCR_N (SCR_H * SCR_W)
+#define PX(x, y) ((y) * SCR_W + (x))
+#define CLIPX(x) ((x) < (0) ? (0) : ((x) >= (SCR_W) ? (SCR_W) : (x)))
 
 extern void js_log_s(const char *text, uint32_t len);
 extern void js_log_f(float value);
@@ -55,10 +58,66 @@ input_state_ptr(void)
 }
 __attribute__((export_name("screenbuffer_ptr")))
 uint32_t
-outbox_ptr(void) { return (uint32_t)(uintptr_t)&scr_buf; }
+screenbuffer_ptr(void) { return (uint32_t)(uintptr_t)&scr_buf; }
 
 ////////////////////////////////////////////////////////////////////////
 // ################################################################## //
+
+///////
+// drawings
+///////
+void _wipe_scr()
+{
+    for (int pxi = 0; pxi < SCR_N; pxi++)
+    {
+        scr_buf[pxi] = 0;
+    }
+}
+void _write_px(Pixel val, int x, int y)
+{
+    scr_buf[PX(x, y)] = val;
+}
+void _blit_glyph_8wide(const uint8_t *bits, int rows, int x, int y)
+{
+    for (int row_i = 0; row_i < rows; row_i++)
+    {
+        uint8_t this_row = bits[row_i];
+        for (int col_i = 0; col_i < 8; col_i++)
+            if (this_row & (0x80 >> col_i))
+            {
+                _write_px(0xFFFFFFFF, x + col_i, y + row_i);
+            }
+    }
+}
+void _draw_rect(Pixel col, int x1, int y1, int x2, int y2)
+{
+    if (x1 < 0)
+        x1 = 0;
+    if (x2 < 0)
+        x2 = 0;
+    if (y1 < 0)
+        y1 = 0;
+    if (y2 < 0)
+        y2 = 0;
+    if (x1 >= SCR_W)
+        x1 = SCR_W;
+    if (x2 >= SCR_W)
+        x2 = SCR_W;
+    if (y1 >= SCR_H)
+        y1 = SCR_H;
+    if (y2 >= SCR_H)
+        y2 = SCR_H;
+    for (int xx = x1; xx <= x2; xx++)
+    {
+        _write_px(col, xx, y1);
+        _write_px(col, xx, y2);
+    }
+    for (int yy = y1; yy <= y2; yy++)
+    {
+        _write_px(col, x1, yy);
+        _write_px(col, x2, yy);
+    }
+}
 
 static int FRAME_CNT = 0;
 static int CURR_SCREEN = 0;
@@ -144,12 +203,12 @@ void _render_sv(int x, int y, String_View sv, int doublesize)
             {
                 if (doublesize)
                 {
-                    js_draw_glyph_16wide(match_g.data_16, 2 * match_g.rows, x + x_offset, y);
+                    // js_draw_glyph_16wide(match_g.data_16, 2 * match_g.rows, x + x_offset, y);
                     x_offset += 2 * (match_g.spacing - 1);
                 }
                 else
                 {
-                    js_draw_glyph_8wide(match_g.data_8, match_g.rows, x + x_offset, y);
+                    _blit_glyph_8wide(match_g.data_8, match_g.rows, x + x_offset, y);
                     x_offset += match_g.spacing - 1;
                 }
                 break;
@@ -177,32 +236,11 @@ __attribute__((export_name("init"))) void init()
     all_screens[SCREEN_TITLE_ID] = screen_title;
     all_screens[SCREEN_SETTINGS_ID] = screen_settings;
     all_screens[SCREEN_DRAFT_WEAP_ID] = screen_draft_weapon;
-
-    for (int i = 0; i < N_HOV; i++)
-    {
-        hoverboxes[i].x = i * SQ_SIZE;
-        hoverboxes[i].y = 480 - SQ_SIZE;
-        hoverboxes[i].w = SQ_SIZE;
-        hoverboxes[i].h = SQ_SIZE;
-        hoverboxes[i].state = 0;
-    }
 }
 
 __attribute__((export_name("update"))) void update(double timestamp_ms)
 {
     (void)timestamp_ms;
-
-    for (int i = 0; i < N_HOV; i++)
-    {
-        int left = hoverboxes[i].x;
-        int right = hoverboxes[i].x + hoverboxes[i].w;
-        int top = hoverboxes[i].y;
-        int bot = hoverboxes[i].y + hoverboxes[i].h;
-        hoverboxes[i].state = inputs.mouse_x > (float)left &&
-                              inputs.mouse_y > (float)top &&
-                              inputs.mouse_x < (float)right &&
-                              inputs.mouse_y < (float)bot;
-    }
 
     // perform UI state updates for the current screen.
     struct screen this_scr = all_screens[CURR_SCREEN];
@@ -228,7 +266,10 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
 
 __attribute__((export_name("draw"))) void draw(void)
 {
-    _render_sv(145, 120, SV("\"Raw\"(?) Font rendering test!!!"), 0);
+    _wipe_scr();
+    _render_sv(145, 120, SV("Sphinx of black quartz, judge my vow!"), 0);
+    _render_sv(145, 160, SV("THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG"), 0);
 
+    _draw_rect(0xFFBBCCFF, inputs.mouse_x - 3, inputs.mouse_y - 3, inputs.mouse_x + 3, inputs.mouse_y + 3);
     // struct screen this_scr = all_screens[CURR_SCREEN];
 }
