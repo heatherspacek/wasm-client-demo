@@ -100,13 +100,13 @@ void _draw_rect(Pixel col, int x1, int y1, int x2, int y2)
     if (y2 < 0)
         y2 = 0;
     if (x1 >= SCR_W)
-        x1 = SCR_W;
+        x1 = SCR_W - 1;
     if (x2 >= SCR_W)
-        x2 = SCR_W;
+        x2 = SCR_W - 1;
     if (y1 >= SCR_H)
-        y1 = SCR_H;
+        y1 = SCR_H - 1;
     if (y2 >= SCR_H)
-        y2 = SCR_H;
+        y2 = SCR_H - 1;
     for (int xx = x1; xx <= x2; xx++)
     {
         _write_px(col, xx, y1);
