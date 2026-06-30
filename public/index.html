@@ -72,14 +72,16 @@
     const cheight = canvas.height;
     const ctx = canvas.getContext("2d", { desynchronized: true });
 
-    const pixelScale = window.devicePixelRatio || 1;
+    const dpr = window.devicePixelRatio || 1;
+    const integerScale = Math.ceil(dpr);
+    // TODO: ask the app for the logical size!
     const LOGICAL_W = 640;
     const LOGICAL_H = 480;
-    canvas.width = LOGICAL_W * pixelScale;
-    canvas.height = LOGICAL_H * pixelScale;
-    canvas.style.width = LOGICAL_W + "px";
-    canvas.style.height = LOGICAL_H + "px";
-    ctx.scale(pixelScale, pixelScale);
+    canvas.width = LOGICAL_W * integerScale;
+    canvas.height = LOGICAL_H * integerScale;
+    canvas.style.width = (canvas.width / dpr) + "px";
+    canvas.style.height = (canvas.height / dpr) + "px";
+    ctx.imageSmoothingEnabled = false;
 
     let canvasRect = canvas.getBoundingClientRect();
     const refreshRect = () => { canvasRect = canvas.getBoundingClientRect(); };
@@ -104,92 +106,21 @@
     });
     canvas.addEventListener("contextmenu", e => e.preventDefault());
 
-    const memory = new WebAssembly.Memory({ initial: 16, maximum: 256 });
-    const pixelBuf = new ArrayBuffer(2048);
-    const glyphPixels = new Uint8ClampedArray(pixelBuf);
-    const glyphWords = new Uint32Array(pixelBuf);
-    const imgData8 = new ImageData(new Uint8ClampedArray(pixelBuf, 0, 8 * 16 * 4), 8, 16);
-    const imgData16 = new ImageData(new Uint8ClampedArray(pixelBuf, 0, 16 * 32 * 4), 16, 32);
-    const glyphCanvas = new OffscreenCanvas(16, 32);
-    const glyphCtx = glyphCanvas.getContext("2d");
+    const memory = new WebAssembly.Memory({ initial: 64, maximum: 256 });
 
     (async () => {
       const imports = {
         env: {
           memory,
-          js_clear(r, g, b) {
-            ctx.fillStyle = `rgb(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0})`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-          },
-
-          js_draw_rect(x, y, w, h, r, g, b, a) {
-            ctx.globalAlpha = a;
-            ctx.fillStyle = `rgb(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0})`;
-            ctx.fillRect(x, y, w, h);
-            ctx.globalAlpha = 1.0;
-          },
-
-          // Draw a UTF-8 string from Wasm linear memory.
-          js_fill_text(textPtr, textLen, x, y, r, g, b, size) {
-            ctx.font = `${size}px monospace`;
-            ctx.fillStyle = `rgb(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0})`;
-            ctx.fillText(readString(textPtr, textLen), x, y);
-          },
-
-          js_draw_glyph_8wide(bitsPtr, nrows, x, y) {
-            const bits = new Uint8Array(memory.buffer, bitsPtr, nrows);
-            glyphWords.fill(0, 0, nrows * 8);
-
-            for (let row = 0; row < nrows; row++) {
-              const byte = bits[row];
-              for (let col = 0; col < 8; col++) {
-                if (byte & (0x80 >> col)) {
-                  glyphWords[row * 8 + col] = 0xFFFFFFFF;
-                }
-              }
-            }
-            glyphCtx.putImageData(imgData8, 0, 0, 0, 0, 8, nrows);
-            ctx.drawImage(glyphCanvas, 0, 0, 8, nrows, x | 0, y | 0, 8, nrows);
-          },
-
-          js_draw_glyph_16wide(bitsPtr, nrows, x, y) {
-            const bits = new Uint16Array(memory.buffer, bitsPtr, nrows);
-            glyphWords.fill(0, 0, nrows * 16);
-            for (let row = 0; row < nrows; row++) {
-              const byte = bits[row];
-              for (let col = 0; col < 16; col++) {
-                if (byte & (0x8000 >> col)) {
-                  glyphWords[row * 16 + col] = 0xFFFFFFFF;
-                }
-              }
-            }
-            glyphCtx.putImageData(imgData16, 0, 0, 0, 0, 16, nrows);
-            ctx.drawImage(glyphCanvas, 0, 0, 16, nrows, x | 0, y | 0, 16, nrows);
-          },
-
-          js_draw_sprite(dest_x, dest_y, dest_w, dest_h, src_x, src_y, src_w, src_h) {
-            ctx.drawImage(spritesheet, src_x, src_y, src_w, src_h,
-              dest_x, dest_y, dest_w, dest_h);
-          },
-
           js_log_s(textPtr, textLen) {
             console.log(readString(textPtr, textLen));
           },
           js_log_i(value) { console.log(value | 0); },
           js_log_f(value) { console.log(value); },
-
         }
       };
 
-      async function loadImage(url) {
-        const blob = await fetch(url).then(r => r.blob());
-        return createImageBitmap(blob);
-      }
-
-      const [app, spritesheet] = await Promise.all([
-        WebAssembly.instantiateStreaming(fetch("game.wasm"), imports),
-        loadImage("spritesheet.png"),
-      ]);
+      const app = await WebAssembly.instantiateStreaming(fetch("game.wasm"), imports);
 
       const wasm = app.instance.exports;
       const inputPtr = wasm.input_state_ptr();
@@ -204,6 +135,12 @@
       }
 
       wasm.init();
+      const bufferPtr = wasm.screenbuffer_ptr();
+      const bufferSize = LOGICAL_W * LOGICAL_H * 4;
+      const wasmPixels = new Uint8ClampedArray(memory.buffer, bufferPtr, bufferSize);
+      const offscreenCanvas = new OffscreenCanvas(LOGICAL_W, LOGICAL_H);
+      const offscreenCtx = offscreenCanvas.getContext("2d");
+      const screenImageData = new ImageData(LOGICAL_W, LOGICAL_H);
 
       function loop(timestamp) {
         wasmInput[0] = inputView[0];
@@ -211,6 +148,11 @@
         wasmInput[2] = inputView[2];
         wasm.update(timestamp);
         wasm.draw();
+        screenImageData.data.set(wasmPixels);
+        offscreenCtx.putImageData(screenImageData, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
+
         requestAnimationFrame(loop);
       }
 
