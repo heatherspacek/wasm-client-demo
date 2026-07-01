@@ -66,22 +66,26 @@
 
   <script>
     "use strict";
-
-    const canvas = document.getElementById("c");
-    const cwidth = canvas.width;
-    const cheight = canvas.height;
-    const ctx = canvas.getContext("2d", { desynchronized: true });
-
-    const dpr = window.devicePixelRatio || 1;
-    const integerScale = Math.ceil(dpr);
-    // TODO: ask the app for the logical size!
+    // TODO: ask the app for the true logical size!
     const LOGICAL_W = 640;
     const LOGICAL_H = 480;
-    canvas.width = LOGICAL_W * integerScale;
-    canvas.height = LOGICAL_H * integerScale;
-    canvas.style.width = (canvas.width / dpr) + "px";
-    canvas.style.height = (canvas.height / dpr) + "px";
-    ctx.imageSmoothingEnabled = false;
+
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d", { desynchronized: true });
+    let phys_to_logical = 1.0;
+    function resizeCanvas() {
+      // for pixel-perfect scaling on non-integer scaling displays
+      const dpr = window.devicePixelRatio || 1;
+      const integerScale = Math.ceil(dpr);
+      canvas.width = LOGICAL_W * integerScale;
+      canvas.height = LOGICAL_H * integerScale;
+      canvas.style.width = (canvas.width / dpr) + "px";
+      canvas.style.height = (canvas.height / dpr) + "px";
+      ctx.imageSmoothingEnabled = false;
+      phys_to_logical = integerScale / dpr;
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
 
     let canvasRect = canvas.getBoundingClientRect();
     const refreshRect = () => { canvasRect = canvas.getBoundingClientRect(); };
@@ -89,13 +93,15 @@
     window.addEventListener("scroll", refreshRect, { passive: true });
 
     const inputView = new Float32Array(3);
+
     canvas.addEventListener("pointermove", e => {
-      inputView[0] = e.clientX - canvasRect.left;
-      inputView[1] = e.clientY - canvasRect.top;
+      inputView[0] = (e.clientX - canvasRect.left) / phys_to_logical;
+      inputView[1] = (e.clientY - canvasRect.top) / phys_to_logical;
+      console.log(e.clientX, canvasRect.left, dpr);
     });
     canvas.addEventListener("pointerdown", e => {
-      inputView[0] = e.clientX - canvasRect.left;
-      inputView[1] = e.clientY - canvasRect.top;
+      inputView[0] = (e.clientX - canvasRect.left) / phys_to_logical;
+      inputView[1] = (e.clientY - canvasRect.top) / phys_to_logical;
       const bit = e.pointerType === "touch" ? 0 : e.button;
       inputView[2] = inputView[2] | (1 << bit);
     });
@@ -121,27 +127,20 @@
       };
 
       const app = await WebAssembly.instantiateStreaming(fetch("game.wasm"), imports);
-
       const wasm = app.instance.exports;
-      const inputPtr = wasm.input_state_ptr();
+
+      // LATER: some crappy network programming.
       // const outboxPtr = wasm.outbox_ptr();
       // const inboxPtr = wasm.inbox_ptr();
-
-      const wasmInput = new Float32Array(memory.buffer, inputPtr, 3);
-      const uint8View = new Uint8Array(memory.buffer);
-      const decoder = new TextDecoder("utf-8");
-      function readString(ptr, len) {
-        return decoder.decode(uint8View.subarray(ptr, ptr + len));
-      }
-
-      wasm.init();
+      const inputPtr = wasm.input_state_ptr();
       const bufferPtr = wasm.screenbuffer_ptr();
       const bufferSize = LOGICAL_W * LOGICAL_H * 4;
+      const wasmInput = new Float32Array(memory.buffer, inputPtr, 3);
       const wasmPixels = new Uint8ClampedArray(memory.buffer, bufferPtr, bufferSize);
       const offscreenCanvas = new OffscreenCanvas(LOGICAL_W, LOGICAL_H);
       const offscreenCtx = offscreenCanvas.getContext("2d");
       const screenImageData = new ImageData(LOGICAL_W, LOGICAL_H);
-
+      wasm.init();
       function loop(timestamp) {
         wasmInput[0] = inputView[0];
         wasmInput[1] = inputView[1];
