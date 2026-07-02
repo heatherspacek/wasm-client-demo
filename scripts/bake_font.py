@@ -1,7 +1,7 @@
 from PIL import Image
 
-fontpath_in = "private/scratch1.png"
-headerpath_out = "private/font_myscratch.h"
+fontpath_in = "res/scratch1.png"
+headerpath_out = "include/data/font_myscratch.h"
 spritesheet_grid = (16, 16)
 char_limits = (0, 0, 8, 16)
 charmap = [
