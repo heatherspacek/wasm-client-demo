@@ -60,6 +60,8 @@ static int CURR_SCREEN = 0;
 static _Bool DBG_TOGGLE = 0;
 
 #define MAX_BTNS 15
+#define MAX_LABELS 15
+#define MAX_STATICSPRITES 15
 #define MAX_SCREENS 6
 
 #define SCREEN_TITLE_ID 0
@@ -79,10 +81,28 @@ struct ui_button
     void (*cbk)();
 };
 
+struct ui_staticsprite
+{
+    int x;
+    int y;
+    const uint32_t *sprite;
+};
+
+struct ui_label
+{
+    int x;
+    int y;
+    String_View label;
+};
+
 struct screen
 {
     struct ui_button buttons[MAX_BTNS];
     int n_buttons;
+    struct ui_label labels[MAX_LABELS];
+    int n_labels;
+    struct ui_staticsprite staticsprites[MAX_STATICSPRITES];
+    int n_staticsprites;
 };
 static struct screen all_screens[MAX_SCREENS];
 
@@ -106,12 +126,33 @@ void _init_ui_button(struct screen *target_scr,
     target_scr->n_buttons++;
 }
 
+void _init_ui_label(struct screen *target_scr,
+                    int x, int y, String_View lab)
+{
+    struct ui_label newlabel = {x, y, lab};
+    target_scr->labels[target_scr->n_labels] = newlabel;
+    target_scr->n_labels++;
+}
+
+void _init_ui_staticsprite(struct screen *target_scr,
+                           int x, int y, const uint32_t *sprite)
+{
+    struct ui_staticsprite newsprite = {x, y, sprite};
+    target_scr->staticsprites[target_scr->n_staticsprites] = newsprite;
+    target_scr->n_staticsprites++;
+}
+
 __attribute__((export_name("init"))) void init()
 {
     // TODO: loading bar, for when init gets huge!
     struct screen screen_title;
     struct screen screen_settings;
     struct screen screen_draft_weapon;
+
+    _init_ui_label(&screen_title, 16, 16, SV("HEATHER'S UNNAMED WIZARD GAME~"));
+    _init_ui_label(&screen_title, 16, 48, SV("\" dot com. \""));
+
+    _init_ui_staticsprite(&screen_title, 75, 35, sprite_2);
 
     _init_ui_button(&screen_title, 20, 205, 105, 35, SV("Start Game"), dummy_cbk);
     _init_ui_button(&screen_title, 20, 275, 105, 35, SV("Settings"), cbk_goto_settings);
@@ -156,19 +197,34 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
 __attribute__((export_name("draw"))) void draw(void)
 {
     _wipe_scr();
-    _render_sv(145, 120, SV("Sphinx of black quartz, judge my vow!"));
-    _render_sv(145, 160, SV("THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG"));
-
-    _draw_rect(0xFFFFFFFF, inputs.mouse_x - 2, inputs.mouse_y - 2, inputs.mouse_x + 2, inputs.mouse_y + 2);
-    _draw_sprite(sprite_0, inputs.mouse_x - 16, inputs.mouse_y);
-    // if (inputs.mouse_buttons == (float)0)
-    // {
-    //     _draw_sprite(sprite_0, inputs.mouse_x - 16, inputs.mouse_y);
-    // }
-    // else if (inputs.mouse_buttons == (float)1)
-    // {
-    //     _draw_sprite(sprite_1, inputs.mouse_x - 16, inputs.mouse_y);
-    // }
 
     struct screen this_scr = all_screens[CURR_SCREEN];
+    for (int lab_i = 0; lab_i < this_scr.n_labels; lab_i++)
+    {
+        struct ui_label lab = this_scr.labels[lab_i];
+        _render_sv(lab.x, lab.y, lab.label);
+    }
+    for (int but_i = 0; but_i < this_scr.n_buttons; but_i++)
+    {
+        struct ui_button but = this_scr.buttons[but_i];
+        Pixel rectcolor = 0xFF00FF44 | (uint32_t)(0xFF * but.click_state);
+        _draw_rect(rectcolor, but.x, but.y, but.x + but.w, but.y + but.h);
+        _render_sv(but.x + 5, but.y + (int)(0.5 * but.h) - 8, but.label);
+    }
+    for (int spr_i = 0; spr_i < this_scr.n_staticsprites; spr_i++)
+    {
+        struct ui_staticsprite spr = this_scr.staticsprites[spr_i];
+        _draw_sprite(spr.sprite, spr.x, spr.y);
+    }
+
+    // ============= M O U S E pointer =====
+    _draw_rect(0xFFFFFFFF, inputs.mouse_x - 1, inputs.mouse_y - 1, inputs.mouse_x + 1, inputs.mouse_y + 1);
+    if (inputs.mouse_buttons == (float)0)
+    {
+        _draw_sprite(sprite_0, inputs.mouse_x - 16, inputs.mouse_y);
+    }
+    else if (inputs.mouse_buttons == (float)1)
+    {
+        _draw_sprite(sprite_1, inputs.mouse_x - 16, inputs.mouse_y);
+    }
 }
