@@ -1,9 +1,12 @@
-
-#include "globals.h"
 #include "data/font_myscratch.h"
 #include "data/spritesheet.h"
 
 #include "drawing.h"
+#include "text.h"
+
+extern void js_log_s(const char *text, uint32_t len);
+extern void js_log_f(float value);
+extern void js_log_i(int value);
 
 typedef struct
 {
@@ -51,13 +54,6 @@ __attribute__((export_name("screenbuffer_ptr")))
 uint32_t
 screenbuffer_ptr(void) { return (uint32_t)(uintptr_t)&scr_buf; }
 
-////////////////////////////////////////////////////////////////////////
-// ################################################################## //
-
-///////
-// drawings
-///////
-
 static int FRAME_CNT = 0;
 static int CURR_SCREEN = 0;
 
@@ -71,20 +67,6 @@ static _Bool DBG_TOGGLE = 0;
 #define SCREEN_DRAFT_WEAP_ID 2
 #define SCREEN_DRAFT_SPELLS_ID 3
 #define SCREEN_COMBAT_ID 4
-
-typedef struct
-{
-    int count;
-    const char *data;
-} String_View;
-#define SV(cstr_lit) sv_from_parts(cstr_lit, sizeof(cstr_lit) - 1)
-String_View sv_from_parts(const char *data, int count)
-{
-    String_View sv;
-    sv.count = count;
-    sv.data = data;
-    return sv;
-}
 
 struct ui_button
 {
@@ -103,30 +85,6 @@ struct screen
     int n_buttons;
 };
 static struct screen all_screens[MAX_SCREENS];
-
-void _render_sv(int x, int y, String_View sv)
-{
-    int x_offset = 0;
-    for (int i = 0; i < sv.count; i++)
-    {
-        char thischar = sv.data[i];
-        if (thischar == ' ')
-        {
-            x_offset += 5;
-            continue;
-        }
-        for (int g_i = 0; g_i < N_CHARS; g_i++)
-        {
-            Glyph match_g = all_glyphs[g_i];
-            if (match_g.character == thischar)
-            {
-                _blit_glyph_8wide(match_g.data_8, match_g.rows, x + x_offset, y);
-                x_offset += match_g.spacing - 1;
-                break;
-            }
-        }
-    }
-}
 
 void cbk_goto_settings()
 {

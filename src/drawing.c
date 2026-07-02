@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "globals.h"
+#include "drawing.h"
 
 Pixel scr_buf[SCR_W * SCR_H] = {0};
 
