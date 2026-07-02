@@ -23,7 +23,7 @@
       touch-action: pinch-zoom;
       -webkit-user-select: none;
       user-select: none;
-      /* cursor: none; */
+      cursor: none;
       image-rendering: pixelated;
     }
 
@@ -97,7 +97,6 @@
     canvas.addEventListener("pointermove", e => {
       inputView[0] = (e.clientX - canvasRect.left) / phys_to_logical;
       inputView[1] = (e.clientY - canvasRect.top) / phys_to_logical;
-      console.log(e.clientX, canvasRect.left, dpr);
     });
     canvas.addEventListener("pointerdown", e => {
       inputView[0] = (e.clientX - canvasRect.left) / phys_to_logical;
@@ -112,7 +111,7 @@
     });
     canvas.addEventListener("contextmenu", e => e.preventDefault());
 
-    const memory = new WebAssembly.Memory({ initial: 64, maximum: 256 });
+    const memory = new WebAssembly.Memory({ initial: 2048, maximum: 8192 });
 
     (async () => {
       const imports = {

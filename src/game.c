@@ -1,18 +1,9 @@
-#include <stdint.h>
-#include "font_myscratch.h" // private! font licensing :)
 
-#define SCR_W 640
-#define SCR_H 480
-#define SCR_N (SCR_H * SCR_W)
-#define PX(x, y) ((y) * SCR_W + (x))
-#define CLIPX(x) ((x) < 0 ? 0 : ((x) >= SCR_W - 1 ? SCR_W - 1 : (x)))
-#define CLIPY(y) ((y) < 0 ? 0 : ((y) >= SCR_H - 1 ? SCR_H - 1 : (y)))
+#include "globals.h"
+#include "data/font_myscratch.h"
+#include "data/spritesheet.h"
 
-extern void js_log_s(const char *text, uint32_t len);
-extern void js_log_f(float value);
-extern void js_log_i(int value);
-
-typedef uint32_t Pixel;
+#include "drawing.h"
 
 typedef struct
 {
@@ -41,7 +32,6 @@ typedef struct
 static Outbox outbox = {0};
 static Inbox inbox = {0};
 static InputState inputs = {0};
-static Pixel scr_buf[SCR_W * SCR_H] = {0};
 
 __attribute__((export_name("outbox_ptr")))
 uint32_t
@@ -67,46 +57,6 @@ screenbuffer_ptr(void) { return (uint32_t)(uintptr_t)&scr_buf; }
 ///////
 // drawings
 ///////
-void _wipe_scr()
-{
-    for (int pxi = 0; pxi < SCR_N; pxi++)
-    {
-        scr_buf[pxi] = 0;
-    }
-}
-void _write_px(Pixel val, int x, int y)
-{
-    scr_buf[PX(x, y)] = val;
-}
-void _blit_glyph_8wide(const uint8_t *bits, int rows, int x, int y)
-{
-    for (int row_i = 0; row_i < rows; row_i++)
-    {
-        uint8_t this_row = bits[row_i];
-        for (int col_i = 0; col_i < 8; col_i++)
-            if (this_row & (0x80 >> col_i))
-            {
-                _write_px(0xFFFFFFFF, x + col_i, y + row_i);
-            }
-    }
-}
-void _draw_rect(Pixel col, int x1, int y1, int x2, int y2)
-{
-    x1 = CLIPX(x1);
-    x2 = CLIPX(x2);
-    y1 = CLIPY(y1);
-    y2 = CLIPY(y2);
-    for (int xx = x1; xx <= x2; xx++)
-    {
-        _write_px(col, xx, y1);
-        _write_px(col, xx, y2);
-    }
-    for (int yy = y1; yy <= y2; yy++)
-    {
-        _write_px(col, x1, yy);
-        _write_px(col, x2, yy);
-    }
-}
 
 static int FRAME_CNT = 0;
 static int CURR_SCREEN = 0;
@@ -154,26 +104,6 @@ struct screen
 };
 static struct screen all_screens[MAX_SCREENS];
 
-void cbk_goto_settings()
-{
-    CURR_SCREEN = SCREEN_SETTINGS_ID;
-}
-
-void cbk_goto_title()
-{
-    CURR_SCREEN = SCREEN_TITLE_ID;
-}
-
-void dummy_cbk() {}
-
-void _init_ui_button(struct screen *target_scr,
-                     int x, int y, int w, int h, String_View label, void *cbk)
-{
-    struct ui_button newbtn = {x, y, w, h, 0, label, cbk};
-    target_scr->buttons[target_scr->n_buttons] = newbtn;
-    target_scr->n_buttons++;
-}
-
 void _render_sv(int x, int y, String_View sv)
 {
     int x_offset = 0;
@@ -196,6 +126,26 @@ void _render_sv(int x, int y, String_View sv)
             }
         }
     }
+}
+
+void cbk_goto_settings()
+{
+    CURR_SCREEN = SCREEN_SETTINGS_ID;
+}
+
+void cbk_goto_title()
+{
+    CURR_SCREEN = SCREEN_TITLE_ID;
+}
+
+void dummy_cbk() {}
+
+void _init_ui_button(struct screen *target_scr,
+                     int x, int y, int w, int h, String_View label, void *cbk)
+{
+    struct ui_button newbtn = {x, y, w, h, 0, label, cbk};
+    target_scr->buttons[target_scr->n_buttons] = newbtn;
+    target_scr->n_buttons++;
 }
 
 __attribute__((export_name("init"))) void init()
@@ -251,7 +201,16 @@ __attribute__((export_name("draw"))) void draw(void)
     _render_sv(145, 120, SV("Sphinx of black quartz, judge my vow!"));
     _render_sv(145, 160, SV("THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG"));
 
-    _draw_rect(0xFFBBCCFF, inputs.mouse_x - 3, inputs.mouse_y - 3, inputs.mouse_x + 3, inputs.mouse_y + 3);
-    _draw_rect(0xAABB00FF, inputs.mouse_x - 7, inputs.mouse_y - 7, inputs.mouse_x + 7, inputs.mouse_y + 7);
-    // struct screen this_scr = all_screens[CURR_SCREEN];
+    _draw_rect(0xFFFFFFFF, inputs.mouse_x - 2, inputs.mouse_y - 2, inputs.mouse_x + 2, inputs.mouse_y + 2);
+    _draw_sprite(sprite_0, inputs.mouse_x - 16, inputs.mouse_y);
+    // if (inputs.mouse_buttons == (float)0)
+    // {
+    //     _draw_sprite(sprite_0, inputs.mouse_x - 16, inputs.mouse_y);
+    // }
+    // else if (inputs.mouse_buttons == (float)1)
+    // {
+    //     _draw_sprite(sprite_1, inputs.mouse_x - 16, inputs.mouse_y);
+    // }
+
+    struct screen this_scr = all_screens[CURR_SCREEN];
 }
