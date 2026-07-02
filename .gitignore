@@ -1,1 +1,2 @@
-private/
+include/private_data
+src/private_resources
