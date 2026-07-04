@@ -7,6 +7,10 @@
 extern void js_log_s(const char *text, uint32_t len);
 extern void js_log_f(float value);
 extern void js_log_i(int value);
+extern void js_set_cursor_default();
+extern void js_set_cursor_pointer();
+extern void js_set_cursor_grab();
+extern void js_set_cursor_grabbing();
 
 typedef struct
 {
@@ -160,18 +164,18 @@ __attribute__((export_name("init"))) void init()
 
     _init_ui_staticsprite(&screen_title, 75, 35, sprite_2);
 
-    _init_ui_button(&screen_title, 20, 205, 85, 25, SV("Start Game"), cbk_goto_draft);
-    _init_ui_button(&screen_title, 20, 245, 85, 25, SV("Settings"), cbk_goto_settings);
-    _init_ui_button(&screen_title, 20, 285, 85, 25, SV("DEBUG"), dummy_cbk);
+    _init_ui_button(&screen_title, 20, 205, 85, 24, SV("Start Game"), cbk_goto_draft);
+    _init_ui_button(&screen_title, 20, 245, 85, 24, SV("Settings"), cbk_goto_settings);
+    _init_ui_button(&screen_title, 20, 285, 85, 24, SV("DEBUG"), dummy_cbk);
 
     _init_ui_button(&screen_settings, 160, 100, 35, 35, SV("<"), dummy_cbk);
     _init_ui_button(&screen_settings, 195, 100, 35, 35, SV(">"), dummy_cbk);
     _init_ui_button(&screen_settings, 160, 150, 50, 35, SV("..."), dummy_cbk);
-    _init_ui_button(&screen_settings, 120, 200, 105, 35, SV("Back to main menu"), cbk_goto_title);
+    _init_ui_button(&screen_settings, 120, 200, 105, 47, SV("Back to main menu"), cbk_goto_title);
 
     // ====================================
 
-    _init_ui_button(&screen_draft_spells, 320, 420, 70, 18, SV("Quit match"), cbk_goto_title);
+    _init_ui_button(&screen_draft_spells, 320, 420, 70, 24, SV("Quit match"), cbk_goto_title);
     // _init_ui_label(&screen_draft_spells, );
     // _init_ui_button()
 
@@ -187,7 +191,7 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
 
     // perform UI state updates for the current screen.
     struct screen this_scr = all_screens[CURR_SCREEN];
-
+    js_set_cursor_default();
     for (int i = 0; i < this_scr.n_buttons; i++)
     {
         struct ui_button bxx = this_scr.buttons[i];
@@ -203,7 +207,12 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
         {
             bxx.cbk();
         }
+        if (hov)
+        {
+            js_set_cursor_pointer();
+        }
     }
+
     FRAME_CNT++;
 }
 
@@ -222,7 +231,7 @@ __attribute__((export_name("draw"))) void draw(void)
         struct ui_button but = this_scr.buttons[but_i];
         Pixel rectcolor = 0xFFAA3344 | (uint32_t)(0xFF * but.click_state);
         _draw_rect(rectcolor, but.x, but.y, but.x + but.w, but.y + but.h);
-        _render_sv(but.x + 5, but.y + (int)(0.5 * but.h) - 8, but.label);
+        _render_sv(but.x + 5, but.y + (int)(0.5 * but.h) - 4, but.label);
     }
     for (int spr_i = 0; spr_i < this_scr.n_staticsprites; spr_i++)
     {
@@ -232,14 +241,6 @@ __attribute__((export_name("draw"))) void draw(void)
 
     // ============= M O U S E pointer =====
     _draw_rect(0xFFFFFFFF, inputs.mouse_x - 1, inputs.mouse_y - 1, inputs.mouse_x + 1, inputs.mouse_y + 1);
-    if (inputs.mouse_buttons == (float)0)
-    {
-        _draw_sprite(sprite_0, inputs.mouse_x - 16, inputs.mouse_y);
-    }
-    else if (inputs.mouse_buttons == (float)1)
-    {
-        _draw_sprite(sprite_1, inputs.mouse_x - 16, inputs.mouse_y);
-    }
 
     // DEBUG: coordinates as digits
     _render_int(210, 0, inputs.mouse_x);
