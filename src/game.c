@@ -116,6 +116,11 @@ void cbk_goto_title()
     CURR_SCREEN = SCREEN_TITLE_ID;
 }
 
+void cbk_goto_draft()
+{
+    CURR_SCREEN = SCREEN_DRAFT_SPELLS_ID;
+}
+
 void dummy_cbk() {}
 
 void _init_ui_button(struct screen *target_scr,
@@ -148,24 +153,32 @@ __attribute__((export_name("init"))) void init()
     struct screen screen_title;
     struct screen screen_settings;
     struct screen screen_draft_weapon;
+    struct screen screen_draft_spells;
 
     _init_ui_label(&screen_title, 16, 16, SV("HEATHER'S UNNAMED WIZARD GAME~"));
     _init_ui_label(&screen_title, 16, 48, SV("\" dot com. \""));
 
     _init_ui_staticsprite(&screen_title, 75, 35, sprite_2);
 
-    _init_ui_button(&screen_title, 20, 205, 105, 35, SV("Start Game"), dummy_cbk);
-    _init_ui_button(&screen_title, 20, 275, 105, 35, SV("Settings"), cbk_goto_settings);
-    _init_ui_button(&screen_title, 20, 345, 105, 35, SV("DEBUG"), dummy_cbk);
+    _init_ui_button(&screen_title, 20, 205, 85, 25, SV("Start Game"), cbk_goto_draft);
+    _init_ui_button(&screen_title, 20, 245, 85, 25, SV("Settings"), cbk_goto_settings);
+    _init_ui_button(&screen_title, 20, 285, 85, 25, SV("DEBUG"), dummy_cbk);
 
     _init_ui_button(&screen_settings, 160, 100, 35, 35, SV("<"), dummy_cbk);
     _init_ui_button(&screen_settings, 195, 100, 35, 35, SV(">"), dummy_cbk);
     _init_ui_button(&screen_settings, 160, 150, 50, 35, SV("..."), dummy_cbk);
     _init_ui_button(&screen_settings, 120, 200, 105, 35, SV("Back to main menu"), cbk_goto_title);
 
+    // ====================================
+
+    _init_ui_button(&screen_draft_spells, 320, 420, 70, 18, SV("Quit match"), cbk_goto_title);
+    // _init_ui_label(&screen_draft_spells, );
+    // _init_ui_button()
+
     all_screens[SCREEN_TITLE_ID] = screen_title;
     all_screens[SCREEN_SETTINGS_ID] = screen_settings;
     all_screens[SCREEN_DRAFT_WEAP_ID] = screen_draft_weapon;
+    all_screens[SCREEN_DRAFT_SPELLS_ID] = screen_draft_spells;
 }
 
 __attribute__((export_name("update"))) void update(double timestamp_ms)
@@ -207,7 +220,7 @@ __attribute__((export_name("draw"))) void draw(void)
     for (int but_i = 0; but_i < this_scr.n_buttons; but_i++)
     {
         struct ui_button but = this_scr.buttons[but_i];
-        Pixel rectcolor = 0xFF00FF44 | (uint32_t)(0xFF * but.click_state);
+        Pixel rectcolor = 0xFFAA3344 | (uint32_t)(0xFF * but.click_state);
         _draw_rect(rectcolor, but.x, but.y, but.x + but.w, but.y + but.h);
         _render_sv(but.x + 5, but.y + (int)(0.5 * but.h) - 8, but.label);
     }
@@ -227,4 +240,9 @@ __attribute__((export_name("draw"))) void draw(void)
     {
         _draw_sprite(sprite_1, inputs.mouse_x - 16, inputs.mouse_y);
     }
+
+    // DEBUG: coordinates as digits
+    _render_int(210, 0, inputs.mouse_x);
+    _render_sv(240, 0, SV(","));
+    _render_int(250, 0, inputs.mouse_y);
 }

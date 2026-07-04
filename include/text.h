@@ -1,4 +1,3 @@
-
 typedef struct
 {
     int count;
@@ -8,3 +7,5 @@ typedef struct
 
 String_View sv_from_parts(const char *data, int count);
 void _render_sv(int x, int y, String_View sv);
+char _digit_to_char(int digit);
+void _render_int(int x, int y, int input_int);
