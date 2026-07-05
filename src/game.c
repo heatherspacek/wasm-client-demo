@@ -175,9 +175,14 @@ __attribute__((export_name("init"))) void init()
 
     // ====================================
 
-    _init_ui_button(&screen_draft_spells, 320, 420, 70, 24, SV("Quit match"), cbk_goto_title);
-    // _init_ui_label(&screen_draft_spells, );
-    // _init_ui_button()
+    _init_ui_button(&screen_draft_spells, 24, 440, 70, 24, SV("Quit match"), cbk_goto_title);
+
+    _init_ui_button(&screen_draft_spells, 95, 50, 450, 100, SV(""), dummy_cbk);
+    _init_ui_button(&screen_draft_spells, 45, 175, 550, 100, SV(""), dummy_cbk);
+    _init_ui_button(&screen_draft_spells, 95, SCR_H - 175, 450, 110, SV(""), dummy_cbk);
+    _init_ui_label(&screen_draft_spells, 115, 55, SV("Opponent deck"));
+    _init_ui_label(&screen_draft_spells, 55, 180, SV("AVAILABLE CARDS"));
+    _init_ui_label(&screen_draft_spells, 115, 392, SV("Your deck"));
 
     all_screens[SCREEN_TITLE_ID] = screen_title;
     all_screens[SCREEN_SETTINGS_ID] = screen_settings;
