@@ -13,7 +13,7 @@
     }
 
     body {
-      background: #0a0a0f;
+      background: #141316;
     }
 
     canvas {
@@ -27,41 +27,48 @@
       image-rendering: pixelated;
     }
 
-    p {
-      display: block;
+    p,
+    summary {
       color: rgb(185, 185, 185);
       font-family: monospace;
       font-size: medium;
       width: 80%;
       margin: 1rem auto;
     }
+
+    summary {
+      cursor: pointer;
+    }
   </style>
 </head>
 
 <body>
   <canvas id="c"></canvas>
-  <p>
-    The above HTML canvas is painted with a C program compiled to webassembly!
-    <br>
-    If you're like me, "webassembly" sounds(/sounded) like an appealing target,
-    but the specifics seemed odious (lock-in to strange SDKs; delegation to a
-    thick JS compatibility layer; some sort of malware called "NPM"...)
-  </p>
-  <p>
-    &nbsp;| <i>"There must be a better way!"</i> &mdash; Raymond Hettinger
-  </p>
-  <p>
-    The source code of this page contains a purpose-built JS shim layer that
-    imbues the compiled WASM application with mouse-tracking and canvas-drawing
-    powers! (&lt;100 lines at time of writing; if I add networking and
-    sprite-loading it'll get thicker.)
-  </p>
-  <p>
-    The C program is compiled with clang --target=wasm32. Amusingly, it does not
-    (and i think <i>cannot</i>) use the C standard library, including malloc.
-    (This takes the exercise in minimalism a bit more extreme than initially
-    intended...!)
-  </p>
+  <details>
+    <summary>implementation info for nerds :]</summary>
+    <p>
+      The above HTML canvas is painted with a C program compiled to webassembly!
+      <br>
+      If you're like me, "webassembly" sounds(/sounded) like an appealing target,
+      but the specifics seemed odious (lock-in to strange SDKs; delegation to a
+      thick JS compatibility layer; some sort of malware called "NPM"...)
+    </p>
+    <p>
+      &nbsp;| <i>"There must be a better way!"</i> &mdash; Raymond Hettinger
+    </p>
+    <p>
+      The source code of this page contains a purpose-built JS shim layer that
+      imbues the compiled WASM application with mouse-tracking and canvas-drawing
+      powers! (&lt;100 lines at time of writing; once I add networking
+      it'll get thicker.)
+    </p>
+    <p>
+      The C program is compiled with clang --target=wasm32. Amusingly, it does not
+      (and i think <i>cannot</i>) use the C standard library, including malloc.
+      (This takes the exercise in minimalism a bit more extreme than initially
+      intended...!)
+    </p>
+  </details>
   <p><a href="https://heatherspacek.com" style="color:blanchedalmond">heatherspacek.com</a></p>
 
   <script>
