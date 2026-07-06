@@ -61,6 +61,8 @@ screenbuffer_ptr(void) { return (uint32_t)(uintptr_t)&scr_buf; }
 static int FRAME_CNT = 0;
 static int CURR_SCREEN = 0;
 
+static int PREV_CLICK_STATE = 0;
+
 static _Bool DBG_TOGGLE = 0;
 
 #define MAX_BTNS 15
@@ -124,6 +126,18 @@ void cbk_goto_draft()
 {
     CURR_SCREEN = SCREEN_DRAFT_SPELLS_ID;
 }
+void cbk_goto_game()
+{
+    CURR_SCREEN = SCREEN_COMBAT_ID;
+}
+
+void cbk_spawn_spell()
+{
+    if (all_screens[CURR_SCREEN].n_staticsprites > MAX_STATICSPRITES)
+    {
+        js_log_s("Can't spawn another sprite!!", 28);
+    }
+}
 
 void dummy_cbk() {}
 
@@ -151,6 +165,13 @@ void _init_ui_staticsprite(struct screen *target_scr,
     target_scr->n_staticsprites++;
 }
 
+void cbk_spritesdemo()
+{
+    _init_ui_staticsprite(&all_screens[CURR_SCREEN], 100, 100, all_sprites[0]);
+    _init_ui_staticsprite(&all_screens[CURR_SCREEN], 100, 132, all_sprites[1]);
+    _init_ui_staticsprite(&all_screens[CURR_SCREEN], 100, 164, all_sprites[2]);
+}
+
 __attribute__((export_name("init"))) void init()
 {
     // TODO: loading bar, for when init gets huge!
@@ -166,7 +187,7 @@ __attribute__((export_name("init"))) void init()
 
     _init_ui_button(&screen_title, 20, 205, 85, 24, SV("Start Game"), cbk_goto_draft);
     _init_ui_button(&screen_title, 20, 245, 85, 24, SV("Settings"), cbk_goto_settings);
-    _init_ui_button(&screen_title, 20, 285, 85, 24, SV("DEBUG"), dummy_cbk);
+    _init_ui_button(&screen_title, 20, 285, 85, 24, SV("DEBUG"), cbk_spritesdemo);
 
     _init_ui_button(&screen_settings, 160, 100, 35, 35, SV("<"), dummy_cbk);
     _init_ui_button(&screen_settings, 195, 100, 35, 35, SV(">"), dummy_cbk);
@@ -176,13 +197,17 @@ __attribute__((export_name("init"))) void init()
     // ====================================
 
     _init_ui_button(&screen_draft_spells, 24, 440, 70, 24, SV("Quit match"), cbk_goto_title);
-
+    _init_ui_button(&screen_draft_spells, 104, 440, 115, 24, SV("DEBUG-- ready up!"), cbk_goto_game);
     _init_ui_button(&screen_draft_spells, 95, 50, 450, 100, SV(""), dummy_cbk);
     _init_ui_button(&screen_draft_spells, 45, 175, 550, 100, SV(""), dummy_cbk);
     _init_ui_button(&screen_draft_spells, 95, SCR_H - 175, 450, 110, SV(""), dummy_cbk);
     _init_ui_label(&screen_draft_spells, 115, 55, SV("Opponent deck"));
     _init_ui_label(&screen_draft_spells, 55, 180, SV("AVAILABLE CARDS"));
     _init_ui_label(&screen_draft_spells, 115, 392, SV("Your deck"));
+
+    _init_ui_button(&screen_draft_spells, 20, 90, 115, 24, SV("[DBG] spawn spell"), cbk_spawn_spell);
+
+    // ====================================
 
     all_screens[SCREEN_TITLE_ID] = screen_title;
     all_screens[SCREEN_SETTINGS_ID] = screen_settings;
@@ -197,18 +222,25 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
     // perform UI state updates for the current screen.
     struct screen this_scr = all_screens[CURR_SCREEN];
     js_set_cursor_default();
+    int hov = 0;
     for (int i = 0; i < this_scr.n_buttons; i++)
     {
         struct ui_button bxx = this_scr.buttons[i];
         int right = bxx.x + bxx.w;
         int bot = bxx.y + bxx.h;
-        int hov = inputs.mouse_x > (float)bxx.x &&
-                  inputs.mouse_y > (float)bxx.y &&
-                  inputs.mouse_x < (float)right &&
-                  inputs.mouse_y < (float)bot;
+        hov = inputs.mouse_x > (float)bxx.x &&
+              inputs.mouse_y > (float)bxx.y &&
+              inputs.mouse_x < (float)right &&
+              inputs.mouse_y < (float)bot;
+
+        if (inputs.mouse_buttons)
+        {
+            hov *= 2;
+        }
+
         // write back!
         all_screens[CURR_SCREEN].buttons[i].click_state = hov;
-        if (hov && inputs.mouse_buttons)
+        if (PREV_CLICK_STATE && hov && !inputs.mouse_buttons)
         {
             bxx.cbk();
         }
@@ -219,6 +251,7 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
     }
 
     FRAME_CNT++;
+    PREV_CLICK_STATE = (int)inputs.mouse_buttons;
 }
 
 __attribute__((export_name("draw"))) void draw(void)
@@ -234,14 +267,13 @@ __attribute__((export_name("draw"))) void draw(void)
     for (int but_i = 0; but_i < this_scr.n_buttons; but_i++)
     {
         struct ui_button but = this_scr.buttons[but_i];
-        Pixel rectcolor = 0xFFAA3344 | (uint32_t)(0xFF * but.click_state);
+        Pixel rectcolor = 0xFFAA3320 | (uint32_t)(0x40 * but.click_state);
         _draw_rect(rectcolor, but.x, but.y, but.x + but.w, but.y + but.h);
         _render_sv(but.x + 5, but.y + (int)(0.5 * but.h) - 4, but.label);
     }
     for (int spr_i = 0; spr_i < this_scr.n_staticsprites; spr_i++)
     {
-        struct ui_staticsprite spr = this_scr.staticsprites[spr_i];
-        _draw_sprite(spr.sprite, spr.x, spr.y);
+        _draw_sprite(this_scr.staticsprites[spr_i].sprite, this_scr.staticsprites[spr_i].x, this_scr.staticsprites[spr_i].y);
     }
 
     // ============= M O U S E pointer =====
