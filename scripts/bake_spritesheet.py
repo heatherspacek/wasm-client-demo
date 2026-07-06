@@ -1,7 +1,7 @@
 from PIL import Image
 import math
 
-spritesheet_in = "res/hands.png"
+spritesheet_in = "res/spritesheet.png"
 headerpath_out = "include/data/spritesheet.h"
 spritesheet_grid = (32, 32)
 
@@ -26,6 +26,7 @@ static const uint32_t sprite_{index}[{math.prod(spritesheet_grid)}] = {{
 
 def write_dataheader(registry: list[str]):
     PREAMBLE = """\
+#pragma once
 #include <stdint.h>
 """
     with open(headerpath_out, "w") as fp:
