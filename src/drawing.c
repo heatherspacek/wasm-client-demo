@@ -43,6 +43,47 @@ void _draw_rect(Pixel col, int x1, int y1, int x2, int y2)
         _write_px(col, x2, yy);
     }
 }
+void setPixel(int x, int y)
+{
+    _write_px(0xFFFFFFFF, x, y);
+}
+void _draw_circle(int xm, int ym, int r)
+{
+    // Bresenham circle, with thanks to Alois Zingl:
+    // http://members.chello.at/~easyfilter/bresenham.html
+
+    int x = -r, y = 0, err = 2 - 2 * r; /* II. Quadrant */
+    do
+    {
+        setPixel(xm - x, ym + y); /*   I. Quadrant */
+        setPixel(xm - y, ym - x); /*  II. Quadrant */
+        setPixel(xm + x, ym - y); /* III. Quadrant */
+        setPixel(xm + y, ym + x); /*  IV. Quadrant */
+        r = err;
+        if (r <= y)
+            err += ++y * 2 + 1; /* e_xy+e_y < 0 */
+        if (r > x || err > y)
+            err += ++x * 2 + 1; /* e_xy+e_x > 0 or no 2nd y-step */
+    } while (x < 0);
+}
+void _draw_sparkle(int xm, int ym, int r)
+{
+    // inside out circle!
+    int x = -r, y = 0, err = 2 - 2 * r; /* II. Quadrant */
+    int offs = r;
+    do
+    {
+        setPixel(xm - y + offs, ym + x + offs);
+        setPixel(xm - y + offs, ym - x - offs);
+        setPixel(xm + y - offs, ym - x - offs);
+        setPixel(xm + y - offs, ym + x + offs);
+        r = err;
+        if (r <= y)
+            err += ++y * 2 + 1; /* e_xy+e_y < 0 */
+        if (r > x || err > y)
+            err += ++x * 2 + 1; /* e_xy+e_x > 0 or no 2nd y-step */
+    } while (x < 0);
+}
 void _draw_sprite(const uint32_t *data, int x, int y)
 {
     for (int xx = 0; xx < 32; xx++)
