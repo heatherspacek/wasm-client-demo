@@ -137,6 +137,11 @@
       // const inboxPtr = wasm.inbox_ptr();
       const inputPtr = wasm.input_state_ptr();
       const bufferPtr = wasm.screenbuffer_ptr();
+      const uint8View = new Uint8Array(memory.buffer);
+      const decoder = new TextDecoder("utf-8");
+      function readString(ptr, len) {
+        return decoder.decode(uint8View.subarray(ptr, ptr + len));
+      }
       const bufferSize = LOGICAL_W * LOGICAL_H * 4;
       const wasmInput = new Float32Array(memory.buffer, inputPtr, 3);
       const wasmPixels = new Uint8ClampedArray(memory.buffer, bufferPtr, bufferSize);
