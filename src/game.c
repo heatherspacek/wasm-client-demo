@@ -118,6 +118,7 @@ static struct screen all_screens[MAX_SCREENS];
 
 void cbk_goto_settings()
 {
+    DBG_TOGGLE = 0;
     CURR_SCREEN = SCREEN_SETTINGS_ID;
 }
 
@@ -128,10 +129,12 @@ void cbk_goto_title()
 
 void cbk_goto_draft()
 {
+    DBG_TOGGLE = 0;
     CURR_SCREEN = SCREEN_DRAFT_SPELLS_ID;
 }
 void cbk_goto_game()
 {
+    DBG_TOGGLE = 0;
     CURR_SCREEN = SCREEN_COMBAT_ID;
 }
 
@@ -182,14 +185,12 @@ void cbk_spawn_spell()
         js_log_s("Can't spawn another spellobj!!", 30);
         return;
     }
-    _add_spellobj_to_screen(&all_screens[CURR_SCREEN], 150, 150, spell01);
+    _add_spellobj_to_screen(&all_screens[CURR_SCREEN], 150 + 32 * all_screens[CURR_SCREEN].n_spellobjs, 150, spell01);
 }
 
-void cbk_spritesdemo()
+void cbk_dbg_toggle()
 {
-    _init_ui_staticsprite(&all_screens[CURR_SCREEN], 100, 100, all_sprites[0]);
-    _init_ui_staticsprite(&all_screens[CURR_SCREEN], 100, 132, all_sprites[1]);
-    _init_ui_staticsprite(&all_screens[CURR_SCREEN], 100, 164, all_sprites[2]);
+    DBG_TOGGLE = !DBG_TOGGLE;
 }
 
 __attribute__((export_name("init"))) void init()
@@ -203,11 +204,9 @@ __attribute__((export_name("init"))) void init()
     _init_ui_label(&screen_title, 16, 16, SV("HEATHER'S UNNAMED WIZARD GAME~"));
     _init_ui_label(&screen_title, 16, 48, SV("\" dot com. \""));
 
-    _init_ui_staticsprite(&screen_title, 75, 35, sprite_2);
-
     _init_ui_button(&screen_title, 20, 205, 85, 24, SV("Start Game"), cbk_goto_draft);
     _init_ui_button(&screen_title, 20, 245, 85, 24, SV("Settings"), cbk_goto_settings);
-    _init_ui_button(&screen_title, 20, 285, 85, 24, SV("DEBUG"), cbk_spritesdemo);
+    _init_ui_button(&screen_title, 20, 285, 85, 24, SV("DEBUG"), cbk_dbg_toggle);
 
     _init_ui_button(&screen_settings, 160, 100, 35, 35, SV("<"), dummy_cbk);
     _init_ui_button(&screen_settings, 195, 100, 35, 35, SV(">"), dummy_cbk);
@@ -300,11 +299,23 @@ __attribute__((export_name("draw"))) void draw(void)
         _draw_sprite(this_scr.spellobjs[spe_i].spelldata.sprite, this_scr.spellobjs[spe_i].x, this_scr.spellobjs[spe_i].y);
     }
 
-    // ============= M O U S E pointer =====
-    _draw_rect(0xFFFFFFFF, inputs.mouse_x - 1, inputs.mouse_y - 1, inputs.mouse_x + 1, inputs.mouse_y + 1);
+    if (DBG_TOGGLE)
+    {
+        int DEBUG_N_SPRITES = 16;
+        for (int i = 0; i < DEBUG_N_SPRITES; i++)
+        {
+            int row = 64 + (i % 10) * 32;
+            int col = 150 + (i / 10) * 64;
 
-    // DEBUG: coordinates as digits
+            _draw_sprite(all_sprites[i], col, row);
+            _render_int(col - 16, row, i);
+        }
+    }
+
     _render_int(210, 0, inputs.mouse_x);
     _render_sv(240, 0, SV(","));
     _render_int(250, 0, inputs.mouse_y);
+
+    // ============= M O U S E pointer =====
+    _draw_rect(0xFFFFFFFF, inputs.mouse_x - 1, inputs.mouse_y - 1, inputs.mouse_x + 1, inputs.mouse_y + 1);
 }
