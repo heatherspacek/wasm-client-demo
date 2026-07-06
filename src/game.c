@@ -3,6 +3,7 @@
 
 #include "drawing.h"
 #include "text.h"
+#include "spelldata.h"
 
 extern void js_log_s(const char *text, uint32_t len);
 extern void js_log_f(float value);
@@ -68,6 +69,7 @@ static _Bool DBG_TOGGLE = 0;
 #define MAX_BTNS 15
 #define MAX_LABELS 15
 #define MAX_STATICSPRITES 15
+#define MAX_SPELLS 15
 #define MAX_SCREENS 6
 
 #define SCREEN_TITLE_ID 0
@@ -109,6 +111,8 @@ struct screen
     int n_labels;
     struct ui_staticsprite staticsprites[MAX_STATICSPRITES];
     int n_staticsprites;
+    struct spellobject spellobjs[MAX_SPELLS];
+    int n_spellobjs;
 };
 static struct screen all_screens[MAX_SCREENS];
 
@@ -129,14 +133,6 @@ void cbk_goto_draft()
 void cbk_goto_game()
 {
     CURR_SCREEN = SCREEN_COMBAT_ID;
-}
-
-void cbk_spawn_spell()
-{
-    if (all_screens[CURR_SCREEN].n_staticsprites > MAX_STATICSPRITES)
-    {
-        js_log_s("Can't spawn another sprite!!", 28);
-    }
 }
 
 void dummy_cbk() {}
@@ -163,6 +159,30 @@ void _init_ui_staticsprite(struct screen *target_scr,
     struct ui_staticsprite newsprite = {x, y, sprite};
     target_scr->staticsprites[target_scr->n_staticsprites] = newsprite;
     target_scr->n_staticsprites++;
+}
+
+void _add_spellobj_to_screen(struct screen *target_scr,
+                             int x, int y, struct spellinfo info)
+{
+    struct spellobject newobj =
+        {
+            .x = x,
+            .y = y,
+            .grabstate = 0,
+            .hoverstate = 0,
+            .spelldata = info};
+    target_scr->spellobjs[target_scr->n_spellobjs] = newobj;
+    target_scr->n_spellobjs++;
+}
+
+void cbk_spawn_spell()
+{
+    if (all_screens[CURR_SCREEN].n_spellobjs > MAX_SPELLS)
+    {
+        js_log_s("Can't spawn another spellobj!!", 30);
+        return;
+    }
+    _add_spellobj_to_screen(&all_screens[CURR_SCREEN], 150, 150, spell01);
 }
 
 void cbk_spritesdemo()
@@ -274,6 +294,10 @@ __attribute__((export_name("draw"))) void draw(void)
     for (int spr_i = 0; spr_i < this_scr.n_staticsprites; spr_i++)
     {
         _draw_sprite(this_scr.staticsprites[spr_i].sprite, this_scr.staticsprites[spr_i].x, this_scr.staticsprites[spr_i].y);
+    }
+    for (int spe_i = 0; spe_i < this_scr.n_spellobjs; spe_i++)
+    {
+        _draw_sprite(this_scr.spellobjs[spe_i].spelldata.sprite, this_scr.spellobjs[spe_i].x, this_scr.spellobjs[spe_i].y);
     }
 
     // ============= M O U S E pointer =====
