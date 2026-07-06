@@ -32,6 +32,11 @@ def write_dataheader(registry: list[str]):
         fp.write(PREAMBLE)
         for i, entry in enumerate(registry):
             fp.write(FMT(index=i, data=",\n".join(entry)))
+        fp.write(f"""\
+static const uint32_t* all_sprites[] = {{
+    {",\n".join([f"sprite_{i}" for i in range(len(registry))])}
+}};
+                 """)
 
 
 if __name__ == "__main__":

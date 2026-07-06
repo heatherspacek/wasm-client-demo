@@ -3077,3 +3077,9 @@ static const uint32_t sprite_2[1024] = {
 0x00000000,
 0x00000000
 };
+static const uint32_t* all_sprites[] = {
+    sprite_0,
+sprite_1,
+sprite_2
+};
+                 
