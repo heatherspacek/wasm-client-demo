@@ -177,7 +177,7 @@ void _add_spellobj_to_screen(struct screen *target_scr,
 
 void cbk_spawn_spell()
 {
-    if (all_screens[CURR_SCREEN].n_spellobjs > MAX_SPELLS)
+    if (all_screens[CURR_SCREEN].n_spellobjs + 1 > MAX_SPELLS)
     {
         js_log_s("Can't spawn another spellobj!!", 30);
         return;
