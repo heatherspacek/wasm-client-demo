@@ -1,4 +1,3 @@
-#include "data/font_myscratch.h"
 #include "data/spritesheet.h"
 
 #include "drawing.h"
@@ -63,6 +62,7 @@ static int FRAME_CNT = 0;
 static int CURR_SCREEN = 0;
 
 static int PREV_CLICK_STATE = 0;
+static int CURR_GRABBED_I = -1;
 
 static _Bool DBG_TOGGLE = 0;
 
@@ -84,7 +84,8 @@ struct ui_button
     int y;
     int w;
     int h;
-    int click_state;
+    int hover_state;
+    int click_state; // 1=primed
     String_View label;
     void (*cbk)();
 };
@@ -143,7 +144,7 @@ void dummy_cbk() {}
 void _init_ui_button(struct screen *target_scr,
                      int x, int y, int w, int h, String_View label, void *cbk)
 {
-    struct ui_button newbtn = {x, y, w, h, 0, label, cbk};
+    struct ui_button newbtn = {x, y, w, h, 0, 0, label, cbk};
     target_scr->buttons[target_scr->n_buttons] = newbtn;
     target_scr->n_buttons++;
 }
@@ -171,8 +172,8 @@ void _add_spellobj_to_screen(struct screen *target_scr,
         {
             .x = x,
             .y = y,
-            .grabstate = 0,
-            .hoverstate = 0,
+            .grab_state = 0,
+            .hover_state = 0,
             .spelldata = info};
     target_scr->spellobjs[target_scr->n_spellobjs] = newobj;
     target_scr->n_spellobjs++;
@@ -191,6 +192,14 @@ void cbk_spawn_spell()
 void cbk_dbg_toggle()
 {
     DBG_TOGGLE = !DBG_TOGGLE;
+}
+
+int _mouse_in_rect(int x, int y, int w, int h)
+{
+    return inputs.mouse_x >= x &&
+           inputs.mouse_y >= y &&
+           inputs.mouse_x <= (x + w) &&
+           inputs.mouse_y <= (y + h);
 }
 
 __attribute__((export_name("init"))) void init()
@@ -239,34 +248,71 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
     (void)timestamp_ms;
 
     // perform UI state updates for the current screen.
-    struct screen this_scr = all_screens[CURR_SCREEN];
-    js_set_cursor_default();
-    int hov = 0;
-    for (int i = 0; i < this_scr.n_buttons; i++)
+    struct screen *this_scr = &all_screens[CURR_SCREEN];
+    int which_cursor = 0; // default
+
+    // ============ hover handling.
+    for (int i = 0; i < this_scr->n_buttons; i++)
     {
-        struct ui_button bxx = this_scr.buttons[i];
-        int right = bxx.x + bxx.w;
-        int bot = bxx.y + bxx.h;
-        hov = inputs.mouse_x > (float)bxx.x &&
-              inputs.mouse_y > (float)bxx.y &&
-              inputs.mouse_x < (float)right &&
-              inputs.mouse_y < (float)bot;
+        struct ui_button *tb = &this_scr->buttons[i];
+        tb->hover_state = _mouse_in_rect(tb->x, tb->y, tb->w, tb->h);
+    }
+    for (int i = 0; i < this_scr->n_spellobjs; i++)
+    {
+        struct spellobject *tso = &this_scr->spellobjs[i];
+        tso->hover_state = _mouse_in_rect(tso->x, tso->y, 32, 32);
+    }
 
-        if (inputs.mouse_buttons)
-        {
-            hov *= 2;
-        }
+    // ============ click handling.
 
-        // write back!
-        all_screens[CURR_SCREEN].buttons[i].click_state = hov;
-        if (PREV_CLICK_STATE && hov && !inputs.mouse_buttons)
+    if (inputs.mouse_buttons && !PREV_CLICK_STATE)
+    {
+        // mouse DOWN event.
+        // - grab grabby
+        // - prime button
+        int click_absorbed = 0;
+        for (int i = 0; i < this_scr->n_spellobjs; i++)
         {
-            bxx.cbk();
+            struct spellobject ts = this_scr->spellobjs[i];
+            if (_mouse_in_rect(ts.x, ts.y, 32, 32))
+            {
+                ts.grab_state = 1;
+                CURR_GRABBED_I = i;
+                click_absorbed = 1;
+                break;
+            }
         }
-        if (hov)
+        if (!click_absorbed)
         {
-            js_set_cursor_pointer();
+            for (int i = 0; i < this_scr->n_buttons; i++)
+            {
+                struct ui_button tb = this_scr->buttons[i];
+                if (_mouse_in_rect(tb.x, tb.y, tb.w, tb.h))
+                {
+                    tb.cbk();
+                    break;
+                }
+            }
         }
+    }
+    else if (!inputs.mouse_buttons && PREV_CLICK_STATE)
+    {
+        // mouse UP event.
+        // - release grabby
+        // - click button if within rect + it was primed
+        if (CURR_GRABBED_I >= 0)
+        {
+            this_scr->spellobjs[CURR_GRABBED_I].grab_state = 0;
+            CURR_GRABBED_I = -1;
+        }
+    }
+
+    // attach da grabby!
+    if (CURR_GRABBED_I >= 0)
+    {
+        this_scr->spellobjs[CURR_GRABBED_I].x = inputs.mouse_x - 16;
+        this_scr->spellobjs[CURR_GRABBED_I].y = inputs.mouse_y - 16;
+        js_set_cursor_grabbing();
     }
 
     FRAME_CNT++;
@@ -286,7 +332,7 @@ __attribute__((export_name("draw"))) void draw(void)
     for (int but_i = 0; but_i < this_scr.n_buttons; but_i++)
     {
         struct ui_button but = this_scr.buttons[but_i];
-        Pixel rectcolor = 0xFFAA3320 | (uint32_t)(0x40 * but.click_state);
+        Pixel rectcolor = 0xFFAA3320 | (uint32_t)(0x40 * but.hover_state);
         _draw_rect(rectcolor, but.x, but.y, but.x + but.w, but.y + but.h);
         _render_sv(but.x + 5, but.y + (int)(0.5 * but.h) - 4, but.label);
     }
@@ -297,6 +343,17 @@ __attribute__((export_name("draw"))) void draw(void)
     for (int spe_i = 0; spe_i < this_scr.n_spellobjs; spe_i++)
     {
         _draw_sprite(this_scr.spellobjs[spe_i].spelldata.sprite, this_scr.spellobjs[spe_i].x, this_scr.spellobjs[spe_i].y);
+        if (this_scr.spellobjs[spe_i].hover_state)
+        {
+            // draw tooltip
+            int cx = this_scr.spellobjs[spe_i].x + 16;
+            int cy = this_scr.spellobjs[spe_i].y + 16;
+            _draw_rect(0xFFDDAAFF, cx - 55, cy + 22, cx + 55, cy + 102);
+            _fill_rect(0xFF220022, cx - 54, cy + 23, cx + 54, cy + 101);
+            _render_sv(cx - 50, cy + 27, this_scr.spellobjs[spe_i].spelldata.name);
+            _render_int(cx + 40, cy + 27, this_scr.spellobjs[spe_i].spelldata.cost);
+            _render_sv(cx - 50, cy + 47, this_scr.spellobjs[spe_i].spelldata.description);
+        }
     }
 
     if (DBG_TOGGLE)

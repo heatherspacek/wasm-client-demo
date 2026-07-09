@@ -43,6 +43,21 @@ void _draw_rect(Pixel col, int x1, int y1, int x2, int y2)
         _write_px(col, x2, yy);
     }
 }
+void _fill_rect(Pixel col, int x1, int y1, int x2, int y2)
+{
+    x1 = CLIPX(x1);
+    x2 = CLIPX(x2);
+    y1 = CLIPY(y1);
+    y2 = CLIPY(y2);
+    for (int xx = x1; xx <= x2; xx++)
+    {
+        for (int yy = y1; yy <= y2; yy++)
+        {
+            _write_px(col, xx, yy);
+        }
+    }
+}
+
 void setPixel(int x, int y)
 {
     _write_px(0xFFFFFFFF, x, y);

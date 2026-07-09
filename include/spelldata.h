@@ -28,8 +28,8 @@ struct spellobject
 {
     int x;
     int y;
-    int grabstate;
-    int hoverstate;
+    int grab_state;
+    int hover_state;
     struct spellinfo spelldata;
 };
 
