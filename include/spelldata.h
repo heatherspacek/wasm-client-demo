@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include "types.h"
 #include "text.h"
 #include "data/spritesheet.h"
 

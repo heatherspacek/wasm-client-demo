@@ -1,5 +1,6 @@
 #include "data/spritesheet.h"
 
+#include "types.h"
 #include "drawing.h"
 #include "text.h"
 #include "spelldata.h"

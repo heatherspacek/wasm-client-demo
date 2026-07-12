@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include "types.h"
 static const uint32_t sprite_0[1024] = {
     0x00000000,
 0x00000000,
@@ -16434,4 +16434,3 @@ sprite_13,
 sprite_14,
 sprite_15
 };
-                 

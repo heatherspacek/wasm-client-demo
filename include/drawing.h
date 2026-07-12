@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include "types.h"
 #define SCR_W 640
 #define SCR_H 480
 #define SCR_N (SCR_H * SCR_W)

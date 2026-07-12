@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include "types.h"
 #define N_CHARS 94
 typedef struct
 {

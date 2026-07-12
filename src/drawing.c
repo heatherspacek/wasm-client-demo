@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include "types.h"
 #include "drawing.h"
 
 Pixel scr_buf[SCR_W * SCR_H] = {0};
