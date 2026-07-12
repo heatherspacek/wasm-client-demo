@@ -27,7 +27,7 @@ static const uint32_t sprite_{index}[{math.prod(spritesheet_grid)}] = {{
 def write_dataheader(registry: list[str]):
     PREAMBLE = """\
 #pragma once
-#include <stdint.h>
+#include "types.h"
 """
     with open(headerpath_out, "w") as fp:
         fp.write(PREAMBLE)

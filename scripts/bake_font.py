@@ -98,7 +98,7 @@ def pixelslist_to_lit16(pixlist: list[list[int]]) -> str:
 
 def write_dataheader(registry: dict[str, list[list[int]]]):
     PREAMBLE = f"""\
-#include <stdint.h>
+#include "types.h"
 #define N_CHARS {len(registry.keys())}
 typedef struct
 {{
