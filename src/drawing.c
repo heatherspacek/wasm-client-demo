@@ -114,3 +114,57 @@ void _draw_sprite(const uint32_t *data, int x, int y)
         }
     }
 }
+
+uint8_t _clamped_add_u8(uint8_t base, uint8_t amt)
+{
+    if ((0xFF - base) <= amt)
+    {
+        return 0xFF;
+    }
+    return base + amt;
+}
+
+Pixel _lighten(Pixel color, uint8_t amt)
+{
+    uint8_t ch1 = _clamped_add_u8(color, amt);
+    uint8_t ch2 = _clamped_add_u8(color >> 8, amt);
+    uint8_t ch3 = _clamped_add_u8(color >> 16, amt);
+
+    return 0xFF000000 + (ch1) + ((uint32_t)ch2 << 8)  + ((uint32_t)ch3 << 16);
+}
+
+uint8_t _clamped_subtract_u8(uint8_t base, uint8_t amt)
+{
+    if (base <= amt)
+    {
+        return 0x00;
+    }
+    return base - amt;
+}
+
+Pixel _darken(Pixel color, uint8_t amt)
+{
+    uint8_t ch1 = _clamped_subtract_u8(color, amt);
+    uint8_t ch2 = _clamped_subtract_u8(color >> 8, amt);
+    uint8_t ch3 = _clamped_subtract_u8(color >> 16, amt);
+
+    return 0xFF000000 + (ch1) + ((uint32_t)ch2 << 8)  + ((uint32_t)ch3 << 16);
+}
+
+void _draw_vbar(Pixel base_color, int x, int y, int w, int h, float progress)
+{
+    Pixel highlight_color = _lighten(base_color, 0x30);
+    Pixel lowlight_color = _darken(base_color, 0x30);
+    Pixel outline_color = 0xFFFFFFFF;
+
+    _draw_rect(outline_color, x, y, x + w, y + h);
+    _draw_rect(base_color, x+1, y+1, x + w -1, y + h -1);
+    _fill_rect(0xFF888888, x + 2, y + 2, x + w -2, y + h -2);
+
+    int progress_px = progress * (h-2);
+    int stop1 = 0.15 * w;
+    int stop2 = 0.6 * w;
+    _fill_rect(lowlight_color, x + 3, y + (h - progress_px), x + w -3, y + h -3);
+    _fill_rect(base_color, x + 2, y + (h-progress_px) + 1, x + stop2 + 2, y + h - 2);
+    _fill_rect(highlight_color, x + 2, y + (h-progress_px) + 1, x + stop1 + 2, y + h -2);
+}

@@ -18,3 +18,5 @@ void _draw_circle(int xm, int ym, int r);
 void _draw_sparkle(int xm, int ym, int r);
 void _draw_sprite(const uint32_t *data, int x, int y);
 void _blit_glyph_8wide(const uint8_t *bits, int rows, int x, int y);
+
+void _draw_vbar(Pixel base_color, int x, int y, int w, int h, float progress);

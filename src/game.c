@@ -378,8 +378,9 @@ __attribute__((export_name("draw"))) void draw(void)
             // draw tooltip
             int cx = this_scr.spellobjs[spe_i].x + 16;
             int cy = this_scr.spellobjs[spe_i].y + 16;
-            _draw_rect(0xFFDDAAFF, cx - 55, cy + 22, cx + 55, cy + 102);
             _fill_rect(0xFF220022, cx - 54, cy + 23, cx + 54, cy + 101);
+            _draw_rect(0xFFDDAAFF, cx - 55, cy + 22, cx + 55, cy + 42);
+            _draw_rect(0xFFDDAAFF, cx - 55, cy + 43, cx + 55, cy + 102);
             _render_sv(cx - 50, cy + 27, this_scr.spellobjs[spe_i].spelldata.name);
             _render_int(cx + 40, cy + 27, this_scr.spellobjs[spe_i].spelldata.cost);
             _render_sv(cx - 50, cy + 47, this_scr.spellobjs[spe_i].spelldata.description);
@@ -397,6 +398,10 @@ __attribute__((export_name("draw"))) void draw(void)
             _draw_sprite(all_sprites[i], col, row);
             _render_int(col - 16, row, i);
         }
+
+        _draw_vbar(0xFFAA0000, 250, 250, 16, 65, 0.4);
+        _draw_vbar(0xFF00AA00, 290, 250, 24, 65, 0.8);
+        _draw_vbar(0xFF0000AA, 330, 250, 32, 65, 0.95);
     }
 
     _render_int(210, 0, inputs.mouse_x);
