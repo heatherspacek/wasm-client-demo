@@ -85,8 +85,7 @@
     function resizeCanvas() {
       const dpr = window.devicePixelRatio || 1;
       // max integer scale that fits vertically
-      const intscale = Math.max(1, Math.floor(window.innerHeight / (LOGICAL_H * dpr)));
-      console.log(intscale);
+      const intscale = Math.max(1, Math.floor(window.innerHeight / (LOGICAL_H / dpr)));
       scale = intscale / dpr;
 
       canvas.style.width = (LOGICAL_W * scale) + "px";
