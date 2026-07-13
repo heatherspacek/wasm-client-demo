@@ -64,6 +64,8 @@ static int CURR_SCREEN = 0;
 
 static int PREV_CLICK_STATE = 0;
 static int CURR_GRABBED_I = -1;
+static int CURR_HOVERED_BUTTON_I = -1;
+static int CURR_HOVERED_SPELL_I = -1;
 
 static _Bool DBG_TOGGLE = 0;
 
@@ -250,18 +252,28 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
 
     // perform UI state updates for the current screen.
     struct screen *this_scr = &all_screens[CURR_SCREEN];
-    int which_cursor = 0; // default
+    CURR_HOVERED_BUTTON_I = -1;
+    CURR_HOVERED_SPELL_I = -1;
 
     // ============ hover handling.
     for (int i = 0; i < this_scr->n_buttons; i++)
     {
         struct ui_button *tb = &this_scr->buttons[i];
         tb->hover_state = _mouse_in_rect(tb->x, tb->y, tb->w, tb->h);
+        if (tb->hover_state)
+        {
+            CURR_HOVERED_BUTTON_I = i;
+            break;
+        }
     }
     for (int i = 0; i < this_scr->n_spellobjs; i++)
     {
         struct spellobject *tso = &this_scr->spellobjs[i];
         tso->hover_state = _mouse_in_rect(tso->x, tso->y, 32, 32);
+        if (tso->hover_state)
+        {
+            CURR_HOVERED_SPELL_I = i;
+        }
     }
 
     // ============ click handling.
@@ -313,8 +325,25 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
     {
         this_scr->spellobjs[CURR_GRABBED_I].x = inputs.mouse_x - 16;
         this_scr->spellobjs[CURR_GRABBED_I].y = inputs.mouse_y - 16;
+    }
+
+    // decide cursor...
+    if (CURR_HOVERED_BUTTON_I >= 0)
+    {
+        js_set_cursor_pointer();
+    }
+    else if (CURR_HOVERED_SPELL_I >= 0)
+    {
+        js_set_cursor_grab();
+    }
+    else if (CURR_GRABBED_I >= 0)
+    {
         js_set_cursor_grabbing();
     }
+    else {
+        js_set_cursor_default();
+    }
+
 
     FRAME_CNT++;
     PREV_CLICK_STATE = (int)inputs.mouse_buttons;
