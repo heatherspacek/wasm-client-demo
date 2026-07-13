@@ -78,18 +78,19 @@
     const LOGICAL_H = 480;
 
     const canvas = document.getElementById("c");
-    const ctx = canvas.getContext("2d", { desynchronized: true });
-    let phys_to_logical = 1.0;
+    canvas.width = LOGICAL_W;
+    canvas.height = LOGICAL_H;
+    const ctx = canvas.getContext("2d", { alpha: false, willReadFrequently: true });
+    let scale = 1.0;
     function resizeCanvas() {
-      // for pixel-perfect scaling on non-integer scaling displays
       const dpr = window.devicePixelRatio || 1;
-      const integerScale = Math.ceil(dpr);
-      canvas.width = LOGICAL_W * integerScale;
-      canvas.height = LOGICAL_H * integerScale;
-      canvas.style.width = (canvas.width / dpr) + "px";
-      canvas.style.height = (canvas.height / dpr) + "px";
+      // max integer scale that fits vertically
+      const intscale = Math.max(1, Math.floor(window.innerHeight / (LOGICAL_H * dpr)));
+      console.log(intscale);
+      scale = intscale / dpr;
+
+      canvas.style.width = (LOGICAL_W * scale) + "px";
       ctx.imageSmoothingEnabled = false;
-      phys_to_logical = integerScale / dpr;
     }
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
@@ -102,12 +103,12 @@
     const inputView = new Float32Array(3);
 
     canvas.addEventListener("pointermove", e => {
-      inputView[0] = (e.clientX - canvasRect.left) / phys_to_logical;
-      inputView[1] = (e.clientY - canvasRect.top) / phys_to_logical;
+      inputView[0] = (e.clientX - canvasRect.left) / scale;
+      inputView[1] = (e.clientY - canvasRect.top) / scale;
     });
     canvas.addEventListener("pointerdown", e => {
-      inputView[0] = (e.clientX - canvasRect.left) / phys_to_logical;
-      inputView[1] = (e.clientY - canvasRect.top) / phys_to_logical;
+      inputView[0] = (e.clientX - canvasRect.left) / scale;
+      inputView[1] = (e.clientY - canvasRect.top) / scale;
       const bit = e.pointerType === "touch" ? 0 : e.button;
       inputView[2] = inputView[2] | (1 << bit);
     });
@@ -152,8 +153,8 @@
       const bufferSize = LOGICAL_W * LOGICAL_H * 4;
       const wasmInput = new Float32Array(memory.buffer, inputPtr, 3);
       const wasmPixels = new Uint8ClampedArray(memory.buffer, bufferPtr, bufferSize);
-      const offscreenCanvas = new OffscreenCanvas(LOGICAL_W, LOGICAL_H);
-      const offscreenCtx = offscreenCanvas.getContext("2d");
+      // const offscreenCanvas = new OffscreenCanvas(LOGICAL_W, LOGICAL_H);
+      // const offscreenCtx = offscreenCanvas.getContext("2d");
       const screenImageData = new ImageData(LOGICAL_W, LOGICAL_H);
       wasm.init();
       function loop(timestamp) {
@@ -163,9 +164,10 @@
         wasm.update(timestamp);
         wasm.draw();
         screenImageData.data.set(wasmPixels);
-        offscreenCtx.putImageData(screenImageData, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
+        // offscreenCtx.putImageData(screenImageData, 0, 0);
+        // ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // ctx.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
+        ctx.putImageData(screenImageData, 0, 0);
 
         requestAnimationFrame(loop);
       }
