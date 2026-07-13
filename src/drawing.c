@@ -5,10 +5,12 @@ Pixel scr_buf[SCR_W * SCR_H] = {0};
 
 void _wipe_scr()
 {
-    for (int pxi = 0; pxi < SCR_N; pxi++)
+    /*for (int pxi = 0; pxi < SCR_N; pxi++)
     {
         scr_buf[pxi] = 0;
-    }
+}*/
+
+    __builtin_memset(scr_buf, 0, sizeof(scr_buf));
 }
 void _write_px(Pixel val, int x, int y)
 {
