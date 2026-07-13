@@ -15,11 +15,6 @@ SPRITE_SCRIPT = scripts/bake_spritesheet.py
 
 BAKE_HEADERS = $(FONT_HEADER) $(SPRITE_HEADER)
 
-# -nostdlib          : no libc, no startup files -- we bring our own ABI
-# --no-entry         : no _start / main required
-# --export-dynamic   : keep all __attribute__((export_name)) exports
-# -Wl,--allow-undefined : let the linker accept the js_* imports unresolved
-
 CFLAGS = \
 	--target=wasm32 \
 	-nostdlib \
