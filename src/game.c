@@ -189,7 +189,7 @@ void cbk_spawn_spell()
         js_log_s("Can't spawn another spellobj!!", 30);
         return;
     }
-    _add_spellobj_to_screen(&all_screens[CURR_SCREEN], 150 + 32 * all_screens[CURR_SCREEN].n_spellobjs, 150, spell01);
+    _add_spellobj_to_screen(&all_screens[CURR_SCREEN], 150 + 32 * all_screens[CURR_SCREEN].n_spellobjs, 150, spell00);
 }
 
 void cbk_dbg_toggle()
@@ -340,10 +340,10 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
     {
         js_set_cursor_grabbing();
     }
-    else {
+    else
+    {
         js_set_cursor_default();
     }
-
 
     FRAME_CNT++;
     PREV_CLICK_STATE = (int)inputs.mouse_buttons;
