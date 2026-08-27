@@ -1,6 +1,6 @@
 #include "text.h"
 #include "drawing.h"
-#include "data/font_myscratch.h"
+#include "private_data/font_lookout_GEN.h"
 
 String_View sv_from_parts(const char *data, int count)
 {
