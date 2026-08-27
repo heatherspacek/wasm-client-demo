@@ -4,6 +4,7 @@
 #include "drawing.h"
 #include "text.h"
 #include "spelldata.h"
+#include "gamestate.h"
 
 #define VERSION SV("v0.1.0")
 
@@ -207,6 +208,8 @@ int _mouse_in_rect(int x, int y, int w, int h)
            inputs.mouse_y <= (y + h);
 }
 
+GamePhase GP;
+
 __attribute__((export_name("init"))) void init()
 {
     // TODO: loading bar, for when init gets huge!
@@ -214,6 +217,8 @@ __attribute__((export_name("init"))) void init()
     struct screen screen_settings;
     struct screen screen_draft_weapon;
     struct screen screen_draft_spells;
+
+    GP = INACTIVE;
 
     _init_ui_label(&screen_title, SCR_W_1_2 - 98, SCR_H_1_10, SV("HEATHER'S UNNAMED WIZARD GAME~"));
 
@@ -253,6 +258,14 @@ __attribute__((export_name("init"))) void init()
 __attribute__((export_name("update"))) void update(double timestamp_ms)
 {
     (void)timestamp_ms;
+
+    // =========== // GAME LOGIC!
+    // - check a state enum with basic rules
+    // - go to a different gamestate_update fcn depending on the enum...
+    //   - for example, during draft, decrement timer, check if player has made selection, talk to the server.
+    //   - during combat, increment resources, check for health-depleted, talk to the server.
+    void (*gfunc)() = determine_gamefunc(GP);
+    gfunc();
 
     // perform UI state updates for the current screen.
     struct screen *this_scr = &all_screens[CURR_SCREEN];
