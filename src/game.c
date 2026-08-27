@@ -5,6 +5,8 @@
 #include "text.h"
 #include "spelldata.h"
 
+#define VERSION SV("v0.1.0")
+
 extern void js_log_s(const char *text, uint32_t len);
 extern void js_log_f(float value);
 extern void js_log_i(int value);
@@ -213,12 +215,14 @@ __attribute__((export_name("init"))) void init()
     struct screen screen_draft_weapon;
     struct screen screen_draft_spells;
 
-    _init_ui_label(&screen_title, 16, 16, SV("HEATHER'S UNNAMED WIZARD GAME~"));
-    _init_ui_label(&screen_title, 16, 48, SV("\" dot com. \""));
+    _init_ui_label(&screen_title, SCR_W_1_2 - 98, SCR_H_1_10, SV("HEATHER'S UNNAMED WIZARD GAME~"));
 
-    _init_ui_button(&screen_title, 20, 205, 85, BTN_H_SMALL, SV("Start Game"), cbk_goto_draft);
-    _init_ui_button(&screen_title, 20, 245, 85, BTN_H_SMALL, SV("Settings"), cbk_goto_settings);
-    _init_ui_button(&screen_title, 20, 285, 85, BTN_H_SMALL, SV("DEBUG"), cbk_dbg_toggle);
+    _init_ui_label(&screen_title, 8, SCR_H_9_10 + 12, VERSION);
+    _init_ui_label(&screen_title, SCR_W_4_10, SCR_H_9_10 + 12, SV("Connection to server: there is no server yet hehe."));
+
+    _init_ui_button(&screen_title, SCR_W_1_2 - 60, SCR_H_4_10, 120, BTN_H_SMALL, SV("Start Game"), cbk_goto_draft);
+    _init_ui_button(&screen_title, SCR_W_1_2 - 60, SCR_H_5_10, 120, BTN_H_SMALL, SV("Settings"), cbk_goto_settings);
+    _init_ui_button(&screen_title, SCR_W_1_2 - 60, SCR_H_6_10, 120, BTN_H_SMALL, SV("DEBUG"), cbk_dbg_toggle);
 
     _init_ui_button(&screen_settings, 160, 100, 35, 35, SV("<"), dummy_cbk);
     _init_ui_button(&screen_settings, 195, 100, 35, 35, SV(">"), dummy_cbk);
