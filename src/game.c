@@ -5,6 +5,7 @@
 #include "text.h"
 #include "spelldata.h"
 #include "gamestate.h"
+#include "timers.h"
 
 #define VERSION SV("v0.1.0")
 
@@ -72,6 +73,11 @@ static int CURR_HOVERED_SPELL_I = -1;
 
 static _Bool DBG_TOGGLE = 0;
 
+static double last_timestamp = 0.0;
+Timer Timer1 = {0};
+Timer Timer2 = {0};
+Timer HeartBeatTimer = {0};
+
 #define MAX_BTNS 15
 #define MAX_LABELS 15
 #define MAX_STATICSPRITES 15
@@ -123,6 +129,7 @@ struct screen
 };
 static struct screen all_screens[MAX_SCREENS];
 
+void dummy_cbk() {}
 void cbk_goto_settings()
 {
     DBG_TOGGLE = 0;
@@ -138,14 +145,13 @@ void cbk_goto_draft()
 {
     DBG_TOGGLE = 0;
     CURR_SCREEN = SCREEN_DRAFT_SPELLS_ID;
+    set_and_start_timer(30, dummy_cbk, &Timer1);
 }
 void cbk_goto_game()
 {
     DBG_TOGGLE = 0;
     CURR_SCREEN = SCREEN_COMBAT_ID;
 }
-
-void dummy_cbk() {}
 
 void _init_ui_button(struct screen *target_scr,
                      int x, int y, int w, int h, String_View label, void *cbk)
@@ -253,11 +259,28 @@ __attribute__((export_name("init"))) void init()
     all_screens[SCREEN_SETTINGS_ID] = screen_settings;
     all_screens[SCREEN_DRAFT_WEAP_ID] = screen_draft_weapon;
     all_screens[SCREEN_DRAFT_SPELLS_ID] = screen_draft_spells;
+
+    // ====================================
+
+    set_and_start_timer(2, dummy_cbk, &HeartBeatTimer);
 }
 
 __attribute__((export_name("update"))) void update(double timestamp_ms)
 {
-    (void)timestamp_ms;
+    int time_elapsed;
+    if (last_timestamp == 0) {
+        time_elapsed = 0;
+    }
+    else {
+        time_elapsed = timestamp_ms - last_timestamp;
+
+    }
+    last_timestamp = timestamp_ms;
+
+    _tick_timer(time_elapsed, &Timer1);
+    _tick_timer(time_elapsed, &Timer2);
+    _tick_timer(time_elapsed, &HeartBeatTimer);
+
 
     // =========== // GAME LOGIC!
     // - check a state enum with basic rules
@@ -420,6 +443,8 @@ __attribute__((export_name("draw"))) void draw(void)
         _draw_vbar(0xFF00AA00, 290, 250, 24, 65, 0.8);
         _draw_vbar(0xFF0000AA, 330, 250, 32, 65, 0.95);
     }
+
+    draw_timer(0, 0, &Timer1);
 
     _render_int(210, 0, inputs.mouse_x);
     _render_sv(240, 0, SV(","));
