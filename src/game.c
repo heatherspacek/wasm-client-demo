@@ -187,7 +187,7 @@ void cbk_spawn_spell()
 }
 
 void cbk_hb() {
-    js_log_s("sending request...", 19);
+    js_log_s("sending request...", 18);
     _make_request(&outbox);
     set_and_start_timer(2, cbk_hb, &HeartBeatTimer);
 }
