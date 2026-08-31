@@ -17,5 +17,8 @@ typedef struct
     uint8_t data[1024];
 } Inbox;
 
-static Outbox outbox = {0};
-static Inbox inbox = {0};
+extern void js_pop_outbox();
+
+void _make_request(Outbox *outbox);
+int _poll_inbox(Inbox *inbox);
+uint8_t _dummy_receive(Inbox *inbox);

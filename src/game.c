@@ -6,8 +6,9 @@
 #include "spelldata.h"
 #include "gamestate.h"
 #include "timers.h"
+#include "network.h"
 
-#define VERSION SV("v0.1.0")
+#define VERSION SV("v0.1.1")
 
 extern void js_log_s(const char *text, uint32_t len);
 extern void js_log_f(float value);
@@ -25,6 +26,9 @@ typedef struct
 } InputState;
 
 static InputState inputs = {0};
+
+static Outbox outbox = {0};
+static Inbox inbox = {0};
 
 __attribute__((export_name("outbox_ptr")))
 uint32_t
@@ -182,6 +186,12 @@ void cbk_spawn_spell()
     _add_spellobj_to_screen(&all_screens[CURR_SCREEN], 150 + 32 * all_screens[CURR_SCREEN].n_spellobjs, 150, spell00);
 }
 
+void cbk_hb() {
+    js_log_s("sending request...", 19);
+    _make_request(&outbox);
+    set_and_start_timer(2, cbk_hb, &HeartBeatTimer);
+}
+
 void cbk_dbg_toggle()
 {
     DBG_TOGGLE = !DBG_TOGGLE;
@@ -243,7 +253,7 @@ __attribute__((export_name("init"))) void init()
 
     // ====================================
 
-    set_and_start_timer(2, dummy_cbk, &HeartBeatTimer);
+    set_and_start_timer(2, cbk_hb, &HeartBeatTimer);
 }
 
 __attribute__((export_name("update"))) void update(double timestamp_ms)
@@ -261,6 +271,12 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
     _tick_timer(time_elapsed, &Timer1);
     _tick_timer(time_elapsed, &Timer2);
     _tick_timer(time_elapsed, &HeartBeatTimer);
+
+
+    if (_poll_inbox(&inbox)) {
+        uint8_t result = _dummy_receive(&inbox);
+        js_log_i(result);
+    }
 
 
     // =========== // GAME LOGIC!
