@@ -5,6 +5,7 @@ typedef struct {
     void (*callback)();
     uint32_t ms_remaining;
     int active;
+    int visible;
 } Timer;
 
 void set_and_start_timer(int init_seconds, void *callback, Timer *timer);
