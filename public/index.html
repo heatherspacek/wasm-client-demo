@@ -133,15 +133,15 @@
           js_set_cursor_pointer() { canvas.style.cursor = "pointer" },
           js_set_cursor_grab() { canvas.style.cursor = "grab" },
           js_set_cursor_grabbing() { canvas.style.cursor = "grabbing" },
+          js_pop_outbox,
         }
       };
 
       const app = await WebAssembly.instantiateStreaming(fetch("game.wasm"), imports);
       const wasm = app.instance.exports;
 
-      // LATER: some crappy network programming.
-      // const outboxPtr = wasm.outbox_ptr();
-      // const inboxPtr = wasm.inbox_ptr();
+      const outboxPtr = wasm.outbox_ptr();
+      const inboxPtr = wasm.inbox_ptr();
       const inputPtr = wasm.input_state_ptr();
       const bufferPtr = wasm.screenbuffer_ptr();
       const uint8View = new Uint8Array(memory.buffer);
@@ -149,11 +149,21 @@
       function readString(ptr, len) {
         return decoder.decode(uint8View.subarray(ptr, ptr + len));
       }
+      const inbox_flag_view = new Uint8Array(memory.buffer, inboxPtr + 0, 1);
+      const inbox_data_view = new Uint8Array(memory.buffer, inboxPtr + 8, 1024);
+      function js_pop_outbox() {
+        fetch("https://games.heatherspacek.com/random", {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: {}
+        }).then(r => r.json()).then(data => {
+          inbox_data_view[0] = data.random;
+          inbox_flag_view[0] = 1;
+        });
+        };
       const bufferSize = LOGICAL_W * LOGICAL_H * 4;
       const wasmInput = new Float32Array(memory.buffer, inputPtr, 3);
       const wasmPixels = new Uint8ClampedArray(memory.buffer, bufferPtr, bufferSize);
-      // const offscreenCanvas = new OffscreenCanvas(LOGICAL_W, LOGICAL_H);
-      // const offscreenCtx = offscreenCanvas.getContext("2d");
       const screenImageData = new ImageData(LOGICAL_W, LOGICAL_H);
       wasm.init();
       function loop(timestamp) {
@@ -163,9 +173,6 @@
         wasm.update(timestamp);
         wasm.draw();
         screenImageData.data.set(wasmPixels);
-        // offscreenCtx.putImageData(screenImageData, 0, 0);
-        // ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // ctx.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
         ctx.putImageData(screenImageData, 0, 0);
 
         requestAnimationFrame(loop);
