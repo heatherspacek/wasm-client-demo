@@ -217,7 +217,7 @@ void cbk_hb() {
 void cbk_dbg_toggle()
 {
     DBG_TOGGLE = !DBG_TOGGLE;
-    play_sfx1(sfx_buf);
+    play_sfx2(sfx_buf);
 }
 
 int _mouse_in_rect(int x, int y, int w, int h)

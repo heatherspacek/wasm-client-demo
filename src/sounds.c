@@ -1,6 +1,8 @@
 #include "sounds.h"
 #define STB_HEXWAVE_NO_ALLOCATION
 #define STB_HEXWAVE_IMPLEMENTATION
+#include "stb_hexwave.h"
+
 
 void play_sfx1(SfxBuf buffer)
 {
@@ -16,5 +18,20 @@ void play_sfx1(SfxBuf buffer)
         buffer[i+7] = -0.707 * mult;
         mult *= 0.94;
     }
+    js_play_sfx_buffer();
+}
+
+void play_sfx2(SfxBuf buffer)
+{
+    const int W = 16;
+    const int O = 8;
+    float osc_buffer[16 * W * (O+1)];
+
+    hexwave_init(16, 8, osc_buffer);
+    HexWave osc = {0};
+    hexwave_create(&osc, 1, 0.2, 0, 0);
+    hexwave_generate_samples(buffer, 512, &osc, 0.1);
+    hexwave_shutdown(osc_buffer);
+
     js_play_sfx_buffer();
 }

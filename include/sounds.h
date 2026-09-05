@@ -1,5 +1,4 @@
 #pragma once
-#include "stb_hexwave.h"
 
 typedef float SfxBuf[512];
 
