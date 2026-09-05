@@ -7,8 +7,9 @@
 #include "gamestate.h"
 #include "timers.h"
 #include "network.h"
+#include "sounds.h"
 
-#define VERSION SV("v0.1.1")
+#define VERSION SV("v0.1.2")
 
 extern void js_log_s(const char *text, uint32_t len);
 extern void js_log_f(float value);
@@ -17,8 +18,6 @@ extern void js_set_cursor_default();
 extern void js_set_cursor_pointer();
 extern void js_set_cursor_grab();
 extern void js_set_cursor_grabbing();
-extern void js_play_sfx_buffer();
-
 
 typedef struct
 {
@@ -32,7 +31,7 @@ static InputState inputs = {0};
 static Outbox outbox = {0};
 static Inbox inbox = {0};
 
-float sfx_buf[512] = {0};
+SfxBuf sfx_buf = {0};
 
 __attribute__((export_name("outbox_ptr")))
 uint32_t
@@ -128,11 +127,13 @@ void cbk_goto_settings()
 {
     DBG_TOGGLE = 0;
     CURR_SCREEN = SCREEN_SETTINGS_ID;
+    play_sfx1(sfx_buf);
 }
 
 void cbk_goto_title()
 {
     CURR_SCREEN = SCREEN_TITLE_ID;
+    play_sfx1(sfx_buf);
 }
 
 void cbk_goto_draft()
@@ -140,11 +141,13 @@ void cbk_goto_draft()
     DBG_TOGGLE = 0;
     CURR_SCREEN = SCREEN_DRAFT_SPELLS_ID;
     set_and_start_timer(30, dummy_cbk, &Timer1);
+    play_sfx1(sfx_buf);
 }
 void cbk_goto_game()
 {
     DBG_TOGGLE = 0;
     CURR_SCREEN = SCREEN_COMBAT_ID;
+    play_sfx1(sfx_buf);
 }
 
 void _init_ui_button(struct screen *target_scr,
@@ -202,6 +205,7 @@ void cbk_spawn_spell()
         return;
     }
     _add_spellobj_to_screen(&all_screens[CURR_SCREEN], 150 + 32 * all_screens[CURR_SCREEN].n_spellobjs, 150, spell00);
+    play_sfx1(sfx_buf);
 }
 
 void cbk_hb() {
@@ -213,18 +217,7 @@ void cbk_hb() {
 void cbk_dbg_toggle()
 {
     DBG_TOGGLE = !DBG_TOGGLE;
-    // TODO: populate sound effect buffer
-    for (int i=0; i<512; i += 8) {
-        sfx_buf[i] = 0.0;
-        sfx_buf[i+1] = 0.707;
-        sfx_buf[i+2] = 1.0;
-        sfx_buf[i+3] = 0.707;
-        sfx_buf[i+4] = 0.0;
-        sfx_buf[i+5] = -0.707;
-        sfx_buf[i+6] = -1.0;
-        sfx_buf[i+7] = -0.707;
-    }
-    js_play_sfx_buffer();
+    play_sfx1(sfx_buf);
 }
 
 int _mouse_in_rect(int x, int y, int w, int h)
