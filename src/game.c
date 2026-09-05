@@ -146,12 +146,21 @@ void _init_ui_button(struct screen *target_scr,
     target_scr->n_buttons++;
 }
 
-void _init_ui_label(struct screen *target_scr,
+int _init_ui_label(struct screen *target_scr,
                     int x, int y, String_View lab)
 {
     struct ui_label newlabel = {x, y, lab};
-    target_scr->labels[target_scr->n_labels] = newlabel;
+    int label_i = target_scr->n_labels;
+    target_scr->labels[label_i] = newlabel;
     target_scr->n_labels++;
+    return label_i;
+}
+
+// likely not the best API for this. re-evaluate someday.
+void _edit_ui_label(struct screen *target_scr, int label_i, String_View lab)
+{
+    struct ui_label newlabel = {target_scr->labels[label_i].x, target_scr->labels[label_i].y, lab};
+    target_scr->labels[label_i] = newlabel;
 }
 
 void _init_ui_staticsprite(struct screen *target_scr,
@@ -207,6 +216,9 @@ int _mouse_in_rect(int x, int y, int w, int h)
 
 GamePhase GP;
 
+// reeeeeeally doubting this pattern.
+int server_status_label_id;
+
 __attribute__((export_name("init"))) void init()
 {
     // TODO: loading bar, for when init gets huge!
@@ -220,7 +232,8 @@ __attribute__((export_name("init"))) void init()
     _init_ui_label(&screen_title, SCR_W_1_2 - 98, SCR_H_1_10, SV("HEATHER'S UNNAMED WIZARD GAME~"));
 
     _init_ui_label(&screen_title, 8, SCR_H_9_10 + 12, VERSION);
-    _init_ui_label(&screen_title, SCR_W_4_10, SCR_H_9_10 + 12, SV("Connection to server: there is no server yet hehe."));
+
+    server_status_label_id = _init_ui_label(&screen_title, SCR_W_4_10, SCR_H_9_10 + 12, SV("Connection to server: idk lol :D"));
 
     _init_ui_button(&screen_title, SCR_W_1_2 - 60, SCR_H_4_10, 120, BTN_H_SMALL, SV("Start Game"), cbk_goto_draft);
     _init_ui_button(&screen_title, SCR_W_1_2 - 60, SCR_H_5_10, 120, BTN_H_SMALL, SV("Settings"), cbk_goto_settings);
@@ -275,6 +288,7 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
 
     if (_poll_inbox(&inbox)) {
         uint8_t result = _dummy_receive(&inbox);
+        _edit_ui_label(&all_screens[SCREEN_TITLE_ID], server_status_label_id, SV("CONNECTED (???ms)"));
         js_log_i(result);
     }
 
