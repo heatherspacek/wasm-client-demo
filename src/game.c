@@ -17,6 +17,8 @@ extern void js_set_cursor_default();
 extern void js_set_cursor_pointer();
 extern void js_set_cursor_grab();
 extern void js_set_cursor_grabbing();
+extern void js_play_sfx_buffer();
+
 
 typedef struct
 {
@@ -29,6 +31,8 @@ static InputState inputs = {0};
 
 static Outbox outbox = {0};
 static Inbox inbox = {0};
+
+float sfx_buf[512] = {0};
 
 __attribute__((export_name("outbox_ptr")))
 uint32_t
@@ -47,6 +51,11 @@ input_state_ptr(void)
 __attribute__((export_name("screenbuffer_ptr")))
 uint32_t
 screenbuffer_ptr(void) { return (uint32_t)(uintptr_t)&scr_buf; }
+
+__attribute__((export_name("sfx_buffer_ptr")))
+uint32_t
+sfx_buffer_ptr(void) { return (uint32_t)(uintptr_t)sfx_buf; }
+
 
 static int FRAME_CNT = 0;
 static int CURR_SCREEN = 0;
@@ -204,6 +213,18 @@ void cbk_hb() {
 void cbk_dbg_toggle()
 {
     DBG_TOGGLE = !DBG_TOGGLE;
+    // TODO: populate sound effect buffer
+    for (int i=0; i<512; i += 8) {
+        sfx_buf[i] = 0.0;
+        sfx_buf[i+1] = 0.707;
+        sfx_buf[i+2] = 1.0;
+        sfx_buf[i+3] = 0.707;
+        sfx_buf[i+4] = 0.0;
+        sfx_buf[i+5] = -0.707;
+        sfx_buf[i+6] = -1.0;
+        sfx_buf[i+7] = -0.707;
+    }
+    js_play_sfx_buffer();
 }
 
 int _mouse_in_rect(int x, int y, int w, int h)

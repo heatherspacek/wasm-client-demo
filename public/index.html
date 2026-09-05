@@ -120,6 +120,17 @@
 
     const memory = new WebAssembly.Memory({ initial: 2048, maximum: 8192 });
 
+    const audioContext = new AudioContext();
+    const audioBuffer = audioContext.createBuffer(1, 512, audioContext.sampleRate);
+
+    function unlockAudio() {
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+      window.removeEventListener("pointerdown", unlockAudio);
+    }
+    window.addEventListener("pointerdown", unlockAudio);
+
     (async () => {
       const imports = {
         env: {
@@ -134,6 +145,7 @@
           js_set_cursor_grab() { canvas.style.cursor = "grab" },
           js_set_cursor_grabbing() { canvas.style.cursor = "grabbing" },
           js_pop_outbox,
+          js_play_sfx_buffer,
         }
       };
 
@@ -144,6 +156,7 @@
       const inboxPtr = wasm.inbox_ptr();
       const inputPtr = wasm.input_state_ptr();
       const bufferPtr = wasm.screenbuffer_ptr();
+      const sfxPtr = wasm.sfx_buffer_ptr();
       const uint8View = new Uint8Array(memory.buffer);
       const decoder = new TextDecoder("utf-8");
       function readString(ptr, len) {
@@ -161,6 +174,16 @@
           inbox_flag_view[0] = 1;
         });
         };
+      const sfx_buf_view = new Float32Array(memory.buffer, sfxPtr, 512);
+      function js_play_sfx_buffer() {
+        audioBuffer.copyToChannel(sfx_buf_view, 0);
+        const source = new AudioBufferSourceNode(audioContext, {
+          buffer: audioBuffer,
+          playbackRate: 0.04,
+        });
+        source.connect(audioContext.destination);
+        source.start();
+      };
       const bufferSize = LOGICAL_W * LOGICAL_H * 4;
       const wasmInput = new Float32Array(memory.buffer, inputPtr, 3);
       const wasmPixels = new Uint8ClampedArray(memory.buffer, bufferPtr, bufferSize);
