@@ -1,9 +1,9 @@
 from PIL import Image
 
-fontpath_in = "res/scratch1.png"
-headerpath_out = "include/data/font_myscratch.h"
+fontpath_in = "res/private/lookout_7.png"
+headerpath_out = "include/private_data/font_lookout.h"
 spritesheet_grid = (16, 16)
-char_limits = (0, 0, 8, 16)
+char_limits = (1, 0, 9, 16)
 charmap = [
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
     """abcdefghijklmnopqrstuvwxyz""",
@@ -11,29 +11,29 @@ charmap = [
     r"[]{}~#&@©®™°^`|/\<>…€$£¢¿¡",
 ]
 space_spacing = 5
-# spacings = {
-#     11: "MNW",
-#     10: "BDEFHKLOPQRUVXY@$ÐÈÉÊËĘŁÒÓÔÖÕŐØẞÙÚÛÜŰÝŸВДЕЁЖКЛНОПРУХЧЩ",
-#     9: "ASTmw©®™€£ÀÁÄÃÅĄŚŞÞ",
-#     8: "CGJZ%&ÂÇĆĞŹŻæœßЄСЭЮЯдлпчщъ",
-#     7: "Idekprstvxyz0123456789?_~#^…¿“”„ÌÍÎÏİðèéêëęőøśşþűýÿźż",
-#     6: "abcfghnoqu+*°`¢«»àáâäãåąçćğñńòóôöõùúûüабвєзийносьэя",
-#     5: """ij\"-=/\\<>‹›ìíîïıłії""",
-#     4: "l.,;:!()[]{}|‘’‚•",
-#     3: "'¡·",
-# }
-spacings_scratch = {
-    11: "",
-    10: "MDWFKLOPQRUVXY@$ÐÈÉÊËĘŁÒÓÔÖÕŐØẞÙÚÛÜŰÝŸВДЕЁЖКЛНОПРУХЧЩ",
-    9: "ANBETHmw©®™€£ÀÁÄÃÅĄŚŞÞ",
-    8: "CSGJZzv%&ÂÇĆĞŹŻæœßЄСЭЮЯдлпчщъ",
-    7: "aIbgdeopuqsntxy0123456789?_~#^…¿“”„ÌÍÎÏİðèéêëęőøśşþűýÿźż",
-    6: "cfihkr+*°`¢«»àáâäãåąçćğñńòóôöõùúûüабвєзийносьэя",
-    5: """jl\"-=/\\<>‹›ìíîïıłії""",
-    4: ".,;:!()[]{}|‘’‚•",
+spacings = {
+    11: "MNW",
+    10: "BDEFHKLOPQRUVXY@$ÐÈÉÊËĘŁÒÓÔÖÕŐØẞÙÚÛÜŰÝŸВДЕЁЖКЛНОПРУХЧЩ",
+    9: "ASTmw©®™€£ÀÁÄÃÅĄŚŞÞ",
+    8: "CGJZ%&ÂÇĆĞŹŻæœßЄСЭЮЯдлпчщъ",
+    7: "Idekprstvxyz0123456789?_~#^…¿“”„ÌÍÎÏİðèéêëęőøśşþűýÿźż",
+    6: "abcfghnoqu+*°`¢«»àáâäãåąçćğñńòóôöõùúûüабвєзийносьэя",
+    5: """ij\"-=/\\<>‹›ìíîïıłії""",
+    4: "l.,;:!()[]{}|‘’‚•",
     3: "'¡·",
 }
-spacings = spacings_scratch
+# spacings_scratch = {
+#     11: "",
+#     10: "MDWFKLOPQRUVXY@$ÐÈÉÊËĘŁÒÓÔÖÕŐØẞÙÚÛÜŰÝŸВДЕЁЖКЛНОПРУХЧЩ",
+#     9: "ANBETHmw©®™€£ÀÁÄÃÅĄŚŞÞ",
+#     8: "CSGJZzv%&ÂÇĆĞŹŻæœßЄСЭЮЯдлпчщъ",
+#     7: "aIbgdeopuqsntxy0123456789?_~#^…¿“”„ÌÍÎÏİðèéêëęőøśşþűýÿźż",
+#     6: "cfihkr+*°`¢«»àáâäãåąçćğñńòóôöõùúûüабвєзийносьэя",
+#     5: """jl\"-=/\\<>‹›ìíîïıłії""",
+#     4: ".,;:!()[]{}|‘’‚•",
+#     3: "'¡·",
+# }
+# spacings = spacings_scratch
 
 
 def c_escaped(str_in: str):

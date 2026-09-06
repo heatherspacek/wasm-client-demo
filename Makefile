@@ -6,7 +6,7 @@ OUT     = public/game.wasm
 PYTHON  = uv run python
 
 FONT_SRC    = res/scratch1.png
-FONT_HEADER = include/data/font_myscratch.h
+FONT_HEADER = include/private_data/font_lookout.h
 FONT_SCRIPT = scripts/bake_font.py
 
 SPRITE_SRC    = res/hands.png
@@ -24,7 +24,7 @@ CFLAGS = \
 	-Wl,--export-dynamic \
 	-Wl,--allow-undefined \
 	-Wl,--import-memory \
-# 	-O2 \
+	-O2 \
 
 .PHONY: all clean
 
