@@ -9,7 +9,7 @@
 #include "network.h"
 #include "sounds.h"
 
-#define VERSION SV("v0.1.2")
+#define VERSION SV("v0.1.3")
 
 extern void js_log_s(const char *text, uint32_t len);
 extern void js_log_f(float value);
@@ -73,6 +73,7 @@ Timer HeartBeatTimer = {0};
 
 #define MAX_BTNS 15
 #define MAX_LABELS 15
+#define MAX_UIVALUES 35
 #define MAX_STATICSPRITES 15
 #define MAX_SPELLS 15
 #define MAX_SCREENS 6
@@ -102,11 +103,21 @@ struct ui_staticsprite
     const uint32_t *sprite;
 };
 
+// for consts!
 struct ui_label
 {
     int x;
     int y;
     String_View label;
+};
+
+// non-consts (values)!
+struct ui_value
+{
+    int x;
+    int y;
+    int value;
+    int digits_used;
 };
 
 struct screen
@@ -115,6 +126,8 @@ struct screen
     int n_buttons;
     struct ui_label labels[MAX_LABELS];
     int n_labels;
+    struct ui_value values[MAX_UIVALUES];
+    int n_values;
     struct ui_staticsprite staticsprites[MAX_STATICSPRITES];
     int n_staticsprites;
     struct spellobject spellobjs[MAX_SPELLS];
@@ -175,6 +188,16 @@ void _edit_ui_label(struct screen *target_scr, int label_i, String_View lab)
     target_scr->labels[label_i] = newlabel;
 }
 
+int _init_ui_value(struct screen *target_scr,
+    int x, int y, int value, int digits)
+{
+    struct ui_value newvalue = {x, y, value, digits};
+    int value_i = target_scr->n_values;
+    target_scr->values[value_i] = newvalue;
+    target_scr->n_values++;
+    return value_i;
+}
+
 void _init_ui_staticsprite(struct screen *target_scr,
                            int x, int y, const uint32_t *sprite)
 {
@@ -210,8 +233,8 @@ void cbk_spawn_spell()
 
 int latency_timer_ms;
 void cbk_hb() {
-    latency_timer_ms = 0;
     _make_request(&outbox);
+    latency_timer_ms = 0;
     set_and_start_timer(2, cbk_hb, &HeartBeatTimer);
 }
 
@@ -233,6 +256,7 @@ GamePhase GP;
 
 // reeeeeeally doubting this pattern.
 int server_status_label_id;
+int latency_timer_value_id;
 
 __attribute__((export_name("init"))) void init()
 {
@@ -248,11 +272,13 @@ __attribute__((export_name("init"))) void init()
 
     _init_ui_label(&screen_title, 8, SCR_H_9_10 + 12, VERSION);
 
-    server_status_label_id = _init_ui_label(&screen_title, SCR_W_4_10, SCR_H_9_10 + 12, SV("Connection to server: idk lol :D"));
+    server_status_label_id = _init_ui_label(&screen_title, SCR_W_7_10 + 12, SCR_H_9_10 + 12, SV("Connecting to server..."));
 
     _init_ui_button(&screen_title, SCR_W_1_2 - 60, SCR_H_4_10, 120, BTN_H_SMALL, SV("Start Game"), cbk_goto_draft);
     _init_ui_button(&screen_title, SCR_W_1_2 - 60, SCR_H_5_10, 120, BTN_H_SMALL, SV("Settings"), cbk_goto_settings);
     _init_ui_button(&screen_title, SCR_W_1_2 - 60, SCR_H_6_10, 120, BTN_H_SMALL, SV("DEBUG"), cbk_dbg_toggle);
+
+    latency_timer_value_id = _init_ui_value(&screen_title, SCR_W_9_10, SCR_H_9_10 + 12, 0, 0);
 
     _init_ui_button(&screen_settings, 160, 100, 35, 35, SV("<"), dummy_cbk);
     _init_ui_button(&screen_settings, 195, 100, 35, 35, SV(">"), dummy_cbk);
@@ -304,8 +330,9 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
     if (_poll_inbox(&inbox)) {
         uint8_t result = _dummy_receive(&inbox);
 
-        js_log_i(latency_timer_ms);
-        _edit_ui_label(&all_screens[SCREEN_TITLE_ID], server_status_label_id, SV("CONNECTED (???ms)"));
+        _edit_ui_label(&all_screens[SCREEN_TITLE_ID], server_status_label_id, SV("Connected:"));
+        all_screens[SCREEN_TITLE_ID].values[latency_timer_value_id].value = latency_timer_ms;
+        all_screens[SCREEN_TITLE_ID].values[latency_timer_value_id].digits_used = 4;
     }
 
 
@@ -432,6 +459,12 @@ __attribute__((export_name("draw"))) void draw(void)
         Pixel rectcolor = 0xFFAA3320 | (uint32_t)(0x40 * but.hover_state);
         _draw_rect(rectcolor, but.x, but.y, but.x + but.w, but.y + but.h);
         _render_sv(but.x + 5, but.y + (int)(0.5 * but.h) - 4, but.label);
+    }
+    for (int val_i = 0; val_i < this_scr.n_values; val_i++)
+    {
+        struct ui_value v = this_scr.values[val_i];
+        if (v.digits_used == 0) {continue;}
+        _render_int(v.x, v.y, v.value);
     }
     for (int spr_i = 0; spr_i < this_scr.n_staticsprites; spr_i++)
     {

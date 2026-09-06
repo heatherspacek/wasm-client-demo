@@ -5,6 +5,7 @@ typedef struct
     const char *data;
 } String_View;
 #define SV(cstr_lit) sv_from_parts(cstr_lit, sizeof(cstr_lit) - 1)
+// used for designated initializers... or something.
 #define SVC(cstr_lit) \
     (String_View) { sizeof(cstr_lit) - 1, cstr_lit }
 
