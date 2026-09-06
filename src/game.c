@@ -8,8 +8,9 @@
 #include "timers.h"
 #include "network.h"
 #include "sounds.h"
+#include "animation.h"
 
-#define VERSION SV("v0.1.3")
+#define VERSION SV("v0.1.4")
 
 extern void js_log_s(const char *text, uint32_t len);
 extern void js_log_f(float value);
@@ -128,6 +129,7 @@ struct screen
     int n_labels;
     struct ui_value values[MAX_UIVALUES];
     int n_values;
+
     struct ui_staticsprite staticsprites[MAX_STATICSPRITES];
     int n_staticsprites;
     struct spellobject spellobjs[MAX_SPELLS];
@@ -251,6 +253,10 @@ int _mouse_in_rect(int x, int y, int w, int h)
            inputs.mouse_x <= (x + w) &&
            inputs.mouse_y <= (y + h);
 }
+
+
+AnimationArena all_animations;
+
 
 GamePhase GP;
 
@@ -391,6 +397,8 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
         }
         if (!click_absorbed)
         {
+            _make_anim_sparklegrow(inputs.mouse_x, inputs.mouse_y, all_animations);
+
             for (int i = 0; i < this_scr->n_buttons; i++)
             {
                 struct ui_button tb = this_scr->buttons[i];
@@ -439,7 +447,6 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
         js_set_cursor_default();
     }
 
-    FRAME_CNT++;
     PREV_CLICK_STATE = (int)inputs.mouse_buttons;
 }
 
@@ -447,43 +454,46 @@ __attribute__((export_name("draw"))) void draw(void)
 {
     _wipe_scr();
 
-    struct screen this_scr = all_screens[CURR_SCREEN];
-    for (int lab_i = 0; lab_i < this_scr.n_labels; lab_i++)
+    // animations should draw "lower" than UI elements.
+    tick_all_animations(all_animations);
+
+    struct screen *this_scr = &all_screens[CURR_SCREEN];
+    for (int lab_i = 0; lab_i < this_scr->n_labels; lab_i++)
     {
-        struct ui_label lab = this_scr.labels[lab_i];
+        struct ui_label lab = this_scr->labels[lab_i];
         _render_sv(lab.x, lab.y, lab.label);
     }
-    for (int but_i = 0; but_i < this_scr.n_buttons; but_i++)
+    for (int but_i = 0; but_i < this_scr->n_buttons; but_i++)
     {
-        struct ui_button but = this_scr.buttons[but_i];
+        struct ui_button but = this_scr->buttons[but_i];
         Pixel rectcolor = 0xFFAA3320 | (uint32_t)(0x40 * but.hover_state);
         _draw_rect(rectcolor, but.x, but.y, but.x + but.w, but.y + but.h);
         _render_sv(but.x + 5, but.y + (int)(0.5 * but.h) - 4, but.label);
     }
-    for (int val_i = 0; val_i < this_scr.n_values; val_i++)
+    for (int val_i = 0; val_i < this_scr->n_values; val_i++)
     {
-        struct ui_value v = this_scr.values[val_i];
+        struct ui_value v = this_scr->values[val_i];
         if (v.digits_used == 0) {continue;}
         _render_int(v.x, v.y, v.value);
     }
-    for (int spr_i = 0; spr_i < this_scr.n_staticsprites; spr_i++)
+    for (int spr_i = 0; spr_i < this_scr->n_staticsprites; spr_i++)
     {
-        _draw_sprite(this_scr.staticsprites[spr_i].sprite, this_scr.staticsprites[spr_i].x, this_scr.staticsprites[spr_i].y);
+        _draw_sprite(this_scr->staticsprites[spr_i].sprite, this_scr->staticsprites[spr_i].x, this_scr->staticsprites[spr_i].y);
     }
-    for (int spe_i = 0; spe_i < this_scr.n_spellobjs; spe_i++)
+    for (int spe_i = 0; spe_i < this_scr->n_spellobjs; spe_i++)
     {
-        _draw_sprite(this_scr.spellobjs[spe_i].spelldata.sprite, this_scr.spellobjs[spe_i].x, this_scr.spellobjs[spe_i].y);
-        if (this_scr.spellobjs[spe_i].hover_state)
+        _draw_sprite(this_scr->spellobjs[spe_i].spelldata.sprite, this_scr->spellobjs[spe_i].x, this_scr->spellobjs[spe_i].y);
+        if (this_scr->spellobjs[spe_i].hover_state)
         {
             // draw tooltip
-            int cx = this_scr.spellobjs[spe_i].x + 16;
-            int cy = this_scr.spellobjs[spe_i].y + 16;
+            int cx = this_scr->spellobjs[spe_i].x + 16;
+            int cy = this_scr->spellobjs[spe_i].y + 16;
             _fill_rect(0xFF220022, cx - 54, cy + 23, cx + 54, cy + 101);
             _draw_rect(0xFFDDAAFF, cx - 55, cy + 22, cx + 55, cy + 42);
             _draw_rect(0xFFDDAAFF, cx - 55, cy + 43, cx + 55, cy + 102);
-            _render_sv(cx - 50, cy + 27, this_scr.spellobjs[spe_i].spelldata.name);
-            _render_int(cx + 40, cy + 27, this_scr.spellobjs[spe_i].spelldata.cost);
-            _render_sv(cx - 50, cy + 47, this_scr.spellobjs[spe_i].spelldata.description);
+            _render_sv(cx - 50, cy + 27, this_scr->spellobjs[spe_i].spelldata.name);
+            _render_int(cx + 40, cy + 27, this_scr->spellobjs[spe_i].spelldata.cost);
+            _render_sv(cx - 50, cy + 47, this_scr->spellobjs[spe_i].spelldata.description);
         }
     }
 
