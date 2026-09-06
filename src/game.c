@@ -208,8 +208,9 @@ void cbk_spawn_spell()
     play_sfx1(sfx_buf);
 }
 
+int latency_timer_ms;
 void cbk_hb() {
-    js_log_s("sending request...", 18);
+    latency_timer_ms = 0;
     _make_request(&outbox);
     set_and_start_timer(2, cbk_hb, &HeartBeatTimer);
 }
@@ -298,12 +299,13 @@ __attribute__((export_name("update"))) void update(double timestamp_ms)
     _tick_timer(time_elapsed, &Timer1);
     _tick_timer(time_elapsed, &Timer2);
     _tick_timer(time_elapsed, &HeartBeatTimer);
-
+    latency_timer_ms += time_elapsed;
 
     if (_poll_inbox(&inbox)) {
         uint8_t result = _dummy_receive(&inbox);
+
+        js_log_i(latency_timer_ms);
         _edit_ui_label(&all_screens[SCREEN_TITLE_ID], server_status_label_id, SV("CONNECTED (???ms)"));
-        js_log_i(result);
     }
 
 
