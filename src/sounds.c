@@ -29,8 +29,8 @@ void play_sfx2(SfxBuf buffer)
 
     hexwave_init(16, 8, osc_buffer);
     HexWave osc = {0};
-    hexwave_create(&osc, 1, 0.2, 0, 0);
-    hexwave_generate_samples(buffer, 512, &osc, 0.1);
+    hexwave_create(&osc, 0, 0, -0.5, 0);
+    hexwave_generate_samples(buffer, 512, &osc, 0.05);
     hexwave_shutdown(osc_buffer);
 
     js_play_sfx_buffer();

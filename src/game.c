@@ -260,8 +260,8 @@ __attribute__((export_name("init"))) void init()
 
     // ====================================
 
-    _init_ui_button(&screen_draft_spells, 24, 370, 70, BTN_H_SMALL, SV("Quit match"), cbk_goto_title);
-    _init_ui_button(&screen_draft_spells, 104, 370, 115, BTN_H_SMALL, SV("DEBUG-- ready up!"), cbk_goto_game);
+    _init_ui_button(&screen_draft_spells, SCR_W_1_8, SCR_H_7_8, 70, BTN_H_SMALL, SV("Quit match"), cbk_goto_title);
+    _init_ui_button(&screen_draft_spells, SCR_W_3_8, SCR_H_7_8, 115, BTN_H_SMALL, SV("DEBUG-- ready up!"), cbk_goto_game);
     _init_ui_button(&screen_draft_spells, 95, 50, 450, 100, SV(""), dummy_cbk);
     _init_ui_button(&screen_draft_spells, 45, 175, 550, 100, SV(""), dummy_cbk);
     _init_ui_button(&screen_draft_spells, 95, SCR_H - 175, 450, 110, SV(""), dummy_cbk);
